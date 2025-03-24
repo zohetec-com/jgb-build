@@ -1,0 +1,92 @@
+#!/bin/bash
+# jgb-build
+#
+# Copyright (C) 2025 Beijing Zohetec Co., Ltd
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to
+# deal in the Software without restriction, including without limitation the
+# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+# sell copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+# IN THE SOFTWARE.
+set -e
+#set -x
+
+JGB_BUILD_OPTIONS="hiRv"
+JGB_BUILD_BACK_END=
+JGB_BUILD_BUILD_DIR="jgb-build.build"
+# TODO: 区分不同硬件平台，c 库版本
+JGB_BUILD_DESTDIR="$HOME/jgb-build.install"
+JGB_BUILD_TYPE="Debug"
+JGB_BUILD_CMAKE_OPTIONS="\
+	-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
+
+help()
+{
+    echo "[用法] jgb-build [-hRv]"
+    echo "-h 打印帮助信息"
+    echo "-R 先作清除，再重新构建"
+    echo "-v 使能 VERBOSE"
+    exit 1
+} >&2
+
+while getopts $JGB_BUILD_OPTIONS opt; do
+  case ${opt} in
+    h)
+      help
+      ;;
+    R)
+      JGB_BUILD_REBULD=yes
+      ;;
+  esac
+done
+
+if [ -f CMakeLists.txt ] ; then
+  JGB_BUILD_BACK_END="cmake"
+fi
+
+if [ "$JGB_BUILD_REBULD" == yes ] ; then
+  if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
+    rm -rf CMakeFiles CMakeCache.txt $JGB_BUILD_BUILD_DIR
+  fi
+fi
+
+# https://stackoverflow.com/questions/2189281/how-to-call-getopts-in-bash-multiple-times
+unset OPTIND
+while getopts $JGB_BUILD_OPTIONS opt; do
+  case ${opt} in
+    h)
+      ;;
+    i)
+      JGB_BUILD_INSTALL=yes
+      ;;
+    v)
+      JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=ON"
+      ;;
+    ?)
+      ;;
+  esac
+done
+
+export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
+export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
+export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib -L${JGB_BUILD_DESTDIR}/usr/local/lib"
+
+if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
+  cmake $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
+  cmake  --build $JGB_BUILD_BUILD_DIR
+  if [ "$JGB_BUILD_INSTALL" == yes ] ; then
+    cmake --install $JGB_BUILD_BUILD_DIR --prefix=$JGB_BUILD_DESTDIR
+  fi
+fi
