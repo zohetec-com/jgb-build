@@ -25,9 +25,9 @@ set -e
 
 JGB_BUILD_OPTIONS="hiRv"
 JGB_BUILD_BACK_END=
-JGB_BUILD_BUILD_DIR="jgb-build.build"
+JGB_BUILD_BUILD_DIR="jgb.build"
 # TODO: 区分不同硬件平台，c 库版本
-JGB_BUILD_DESTDIR="$HOME/jgb-build.install"
+JGB_BUILD_DESTDIR="$HOME/jgb.install"
 JGB_BUILD_TYPE="Debug"
 JGB_BUILD_CMAKE_OPTIONS="\
 	-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
