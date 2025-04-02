@@ -41,6 +41,28 @@ help()
     exit 1
 } >&2
 
+goto_top_dir()
+{
+  while true;
+  do
+      if [ -f CMakeLists.txt ] ; then
+        if grep -q "^project" CMakeLists.txt ; then
+          echo "top directory: $PWD"
+          break
+        fi
+      fi
+
+      if [ "$PWD" != / ] ; then
+        cd ..
+      else
+        echo "[ERR] find top directory failed."
+        exit 1
+      fi
+  done
+}
+
+goto_top_dir
+
 while getopts $JGB_BUILD_OPTIONS opt; do
   case ${opt} in
     h)
