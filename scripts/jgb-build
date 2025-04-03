@@ -105,6 +105,11 @@ export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/i
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib -L${JGB_BUILD_DESTDIR}/usr/local/lib"
 
+if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
+  CFLAGS="$CFLAGS -DDEBUG"
+  CXXFLAGS="$CXXFLAGS -DDEBUG"
+fi
+
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
   cmake $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
   cmake  --build $JGB_BUILD_BUILD_DIR
