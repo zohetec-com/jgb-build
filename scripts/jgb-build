@@ -23,22 +23,28 @@
 set -e
 #set -x
 
-JGB_BUILD_OPTIONS="chiRv"
+JGB_BUILD_OPTIONS="chiRSt:vW"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 # TODO: 区分不同硬件平台，c 库版本
 JGB_BUILD_DESTDIR="$HOME/jgb.install"
-JGB_BUILD_TYPE="Debug"
-JGB_BUILD_CMAKE_OPTIONS="\
-	-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
+JGB_BUILD_TYPE="Release"
 JGB_BUILD_COVERAGE=no
+JGB_BUILD_SANITIZE=no
+JGB_BUILD_WALL=no
+JGB_BUILD_VERBOSE=no
 
 help()
 {
-    echo "[用法] jgb-build [-hRv]"
+    echo "[用法] jgb-build [-chiRt:v]"
+    echo "-c 启用代码覆盖编译选项"
     echo "-h 打印帮助信息"
+    echo "-i 执行安装"
     echo "-R 先作清除，再重新构建"
+    echo "-S 启用 sanitize"
+    echo "-t [Release|Debug] 选择构建类型"
     echo "-v 使能 VERBOSE"
+    echo "-W 启用编译警告选项"
     exit 1
 } >&2
 
@@ -97,8 +103,17 @@ while getopts $JGB_BUILD_OPTIONS opt; do
     i)
       JGB_BUILD_INSTALL=yes
       ;;
+    s)
+      JGB_BUILD_SANITIZE=yes
+      ;;
+    t)
+      JGB_BUILD_TYPE=${OPTARG}
+      ;;
     v)
-      JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=ON"
+      JGB_BUILD_VERBOSE=yes
+      ;;
+    w)
+      JGB_BUILD_WALL=yes
       ;;
     ?)
       ;;
@@ -109,14 +124,31 @@ export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/i
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib -L${JGB_BUILD_DESTDIR}/usr/local/lib"
 
+JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
+
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
-  CFLAGS="$CFLAGS -DDEBUG"
-  CXXFLAGS="$CXXFLAGS -DDEBUG"
+  CFLAGS="$CFLAGS -DDEBUG -g -O0"
+  CXXFLAGS="$CXXFLAGS -DDEBUG -g -O0"
 fi
 
 if [ "$JGB_BUILD_COVERAGE" == yes ] ; then
   CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
   CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
+fi
+
+if [ "$JGB_BUILD_SANITIZE" == yes ] ; then
+  CFLAGS="$CFLAGS -fsanitize=address"
+  CXXFLAGS="$CXXFLAGS -fsanitize=address"
+  LDFLAGS="$LDFLAGS -fsanitize=address"
+fi
+
+if [ "$JGB_BUILD_WALL" == yes ] ; then
+  CFLAGS="$CFLAGS -Werror -Wall -Wextra"
+  CXXFLAGS="$CXXFLAGS -Werror -Wall -Wextra"
+fi
+
+if [ "$JGB_BUILD_VERBOSE" == yes ] ; then
+  JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=ON"
 fi
 
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
