@@ -23,7 +23,7 @@
 set -e
 #set -x
 
-JGB_BUILD_OPTIONS="hiRv"
+JGB_BUILD_OPTIONS="chiRv"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 # TODO: 区分不同硬件平台，c 库版本
@@ -31,6 +31,7 @@ JGB_BUILD_DESTDIR="$HOME/jgb.install"
 JGB_BUILD_TYPE="Debug"
 JGB_BUILD_CMAKE_OPTIONS="\
 	-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
+JGB_BUILD_COVERAGE=no
 
 help()
 {
@@ -88,6 +89,9 @@ fi
 unset OPTIND
 while getopts $JGB_BUILD_OPTIONS opt; do
   case ${opt} in
+    c)
+      JGB_BUILD_COVERAGE=yes
+      ;;
     h)
       ;;
     i)
@@ -108,6 +112,11 @@ export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib -L${JGB_BUILD_DESTDIR}/usr/local/lib"
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
   CFLAGS="$CFLAGS -DDEBUG"
   CXXFLAGS="$CXXFLAGS -DDEBUG"
+fi
+
+if [ "$JGB_BUILD_COVERAGE" == yes ] ; then
+  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
+  CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
 fi
 
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
