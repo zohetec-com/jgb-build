@@ -24,7 +24,7 @@ set -e
 #set -x
 
 JGB_BUILD_SAVED="JGB_BUILD_TYPE JGB_BUILD_COVERAGE JGB_BUILD_SANITIZE JGB_BUILD_WALL JGB_BUILD_VERBOSE JGB_BUILD_INSTALL"
-JGB_BUILD_OPTIONS="chiRst:vW"
+JGB_BUILD_OPTIONS="chiRst:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 # TODO: 区分不同硬件平台，c 库版本
@@ -53,7 +53,7 @@ save_set()
 
 help()
 {
-    echo "[用法] jgb-build [-chiRt:v]"
+    echo "[用法] jgb-build [-chiRst:vw]"
     echo "-c 启用代码覆盖编译选项"
     echo "-h 打印帮助信息"
     echo "-i 执行安装"
@@ -61,7 +61,7 @@ help()
     echo "-s 启用 sanitize"
     echo "-t [Release|Debug] 选择构建类型"
     echo "-v 使能 VERBOSE"
-    echo "-W 启用编译警告选项"
+    echo "-w 启用编译警告选项"
     exit 1
 } >&2
 
