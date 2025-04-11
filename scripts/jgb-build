@@ -58,7 +58,7 @@ help()
     echo "-h 打印帮助信息"
     echo "-i 执行安装"
     echo "-R 先作清除，再重新构建"
-    echo "-S 启用 sanitize"
+    echo "-s 启用 sanitize"
     echo "-t [Release|Debug] 选择构建类型"
     echo "-v 使能 VERBOSE"
     echo "-W 启用编译警告选项"
