@@ -23,16 +23,33 @@
 set -e
 #set -x
 
-JGB_BUILD_OPTIONS="chiRSt:vW"
+JGB_BUILD_SAVED="JGB_BUILD_TYPE JGB_BUILD_COVERAGE JGB_BUILD_SANITIZE JGB_BUILD_WALL JGB_BUILD_VERBOSE JGB_BUILD_INSTALL"
+JGB_BUILD_OPTIONS="chiRst:vW"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 # TODO: 区分不同硬件平台，c 库版本
 JGB_BUILD_DESTDIR="$HOME/jgb.install"
-JGB_BUILD_TYPE="Release"
-JGB_BUILD_COVERAGE=no
-JGB_BUILD_SANITIZE=no
-JGB_BUILD_WALL=no
-JGB_BUILD_VERBOSE=no
+JGB_BUILD_CONFIG="$JGB_BUILD_BUILD_DIR/jgb-config"
+
+preset()
+{
+    JGB_BUILD_TYPE="Release"
+    JGB_BUILD_COVERAGE=no
+    JGB_BUILD_SANITIZE=no
+    JGB_BUILD_WALL=no
+    JGB_BUILD_VERBOSE=no
+    JGB_BUILD_INSTALL=no
+}
+
+save_set()
+{
+    mkdir -p $JGB_BUILD_BUILD_DIR
+    echo -n > $JGB_BUILD_CONFIG
+    for p in $JGB_BUILD_SAVED ;
+    do
+      eval "echo $p=\"\$$p\"" >> $JGB_BUILD_CONFIG
+    done
+}
 
 help()
 {
@@ -69,6 +86,7 @@ goto_top_dir()
 }
 
 goto_top_dir
+preset
 
 while getopts $JGB_BUILD_OPTIONS opt; do
   case ${opt} in
@@ -89,6 +107,11 @@ if [ "$JGB_BUILD_REBULD" == yes ] ; then
   if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
     rm -rf CMakeFiles CMakeCache.txt $JGB_BUILD_BUILD_DIR
   fi
+fi
+
+# 载入记忆配置
+if [ -f $JGB_BUILD_CONFIG ] ; then
+  . $JGB_BUILD_CONFIG
 fi
 
 # https://stackoverflow.com/questions/2189281/how-to-call-getopts-in-bash-multiple-times
@@ -119,6 +142,9 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       ;;
   esac
 done
+
+# 保存记忆
+save_set
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
