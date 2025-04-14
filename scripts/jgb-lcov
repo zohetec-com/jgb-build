@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+. jgb-helper
+goto_top_dir
+
+# https://www.jedsharpsoftware.com/c++/2020/09/16/CPP-CodeCoverage.html
+lcov -c -d . -o main_coverage.info
+genhtml main_coverage.info --output-directory out
+google-chrome out/index.html

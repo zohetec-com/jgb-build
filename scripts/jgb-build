@@ -65,25 +65,7 @@ help()
     exit 1
 } >&2
 
-goto_top_dir()
-{
-  while true;
-  do
-      if [ -f CMakeLists.txt ] ; then
-        if grep -q "^project" CMakeLists.txt ; then
-          echo "top directory: $PWD"
-          break
-        fi
-      fi
-
-      if [ "$PWD" != / ] ; then
-        cd ..
-      else
-        echo "[ERR] find top directory failed."
-        exit 1
-      fi
-  done
-}
+. jgb-helper
 
 goto_top_dir
 preset
