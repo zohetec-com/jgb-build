@@ -47,7 +47,7 @@ save_set()
     echo -n > $JGB_BUILD_CONFIG
     for p in $JGB_BUILD_SAVED ;
     do
-      eval "echo $p=\"\$$p\"" >> $JGB_BUILD_CONFIG
+      eval "echo $p=\"\$$p\"" | tee -a $JGB_BUILD_CONFIG
     done
 }
 
