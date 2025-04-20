@@ -49,33 +49,35 @@ if [ -z "$package_src" ] ; then
 fi >&2
 
 package_chk=${jgb_chk[$package]}
-if [ -z "$package_src" ] ; then
+if [ -n "$package_chk" ] ; then
+  package_chk_file=$(basename $package_chk)
+  package_chk_file_cache=$JGB_BUILD_CACHE_DIR/$package_chk_file
+else
   echo "$JGB_BUILD_PACKAGES_FILE 文件中未指定 jgb_chk[$package]"
-  exit 1
 fi >&2
 
 package_src_file=$(basename $package_src)
 package_src_file_cache=$JGB_BUILD_CACHE_DIR/$package_src_file
-package_chk_file=$(basename $package_chk)
-package_chk_file_cache=$JGB_BUILD_CACHE_DIR/$package_chk_file
 
 if [ ! -f $package_src_file_cache ] ; then
   mkdir -p $JGB_BUILD_CACHE_DIR
   wget -c $package_src -O $package_src_file_cache
-  wget -c $package_chk -O $package_chk_file_cache
-
-  pushd .
-  cd $JGB_BUILD_CACHE_DIR
-  if [[ $package_chk_file == *".sha256" ]] ; then
-    sha256sum -c $package_chk_file
-  else
-    echo 不支持的校验文件类型
-    exit 1
+  if [ -n "$package_chk" ] ; then
+    wget -c $package_chk -O $package_chk_file_cache
+    pushd .
+    cd $JGB_BUILD_CACHE_DIR
+    if [[ $package_chk_file == *".sha256" ]] ; then
+      sha256sum -c $package_chk_file
+    else
+      echo 不支持的校验文件类型
+      exit 1
+    fi
+    popd
   fi
-  popd
 fi
 
 [ ! -d $package ]
+# https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
 if [[ $package_src_file == *".tar.gz" ]] ; then
   # 假定：解压缩结果的顶级目录名和包名一致。
   tar xf $package_src_file_cache
