@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+. jgb-helper
+jgb-build
+export LD_LIBRARY_PATH=$JGB_BUILD_DIR/Debug/$(uname -p)/lib
+$@

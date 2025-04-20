@@ -40,3 +40,13 @@ goto_top_dir()
       fi
   done
 }
+
+if [ -v JGB_BUILD_DEBUG ] ; then
+  set -x
+fi
+
+# jgb-build 全局工作目录
+JGB_BUILD_DIR=$HOME/jgb-build.dir
+JGB_BUILD_CONFIG_DIR=$JGB_BUILD_DIR/conf
+JGB_BUILD_PACKAGES_FILE=$JGB_BUILD_CONFIG_DIR/packages
+JGB_BUILD_CACHE_DIR=$JGB_BUILD_DIR/cache

@@ -21,9 +21,11 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 set -e
-#set -x
+
+. jgb-helper
 
 JGB_BUILD_SAVED="\
+  JGB_BUILD_TARGET_ARCH \
   JGB_BUILD_TYPE \
   JGB_BUILD_COVERAGE \
   JGB_BUILD_SANITIZE \
@@ -31,15 +33,14 @@ JGB_BUILD_SAVED="\
   JGB_BUILD_VERBOSE \
   JGB_BUILD_INSTALL \
   JGB_BUILD_RELATIVE_PATH"
-JGB_BUILD_OPTIONS="chirRst:vw"
+JGB_BUILD_OPTIONS="chip:rRst:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
-# TODO: 区分不同硬件平台，c 库版本
-JGB_BUILD_DESTDIR="$HOME/jgb.install"
-JGB_BUILD_CONFIG="$JGB_BUILD_BUILD_DIR/jgb-config"
+JGB_BUILD_OPTIONS_FILE="$JGB_BUILD_BUILD_DIR/jgb-options"
 
 preset()
 {
+    JGB_BUILD_TARGET_ARCH=$(uname -p)
     JGB_BUILD_TYPE="Release"
     JGB_BUILD_COVERAGE=no
     JGB_BUILD_SANITIZE=no
@@ -52,29 +53,28 @@ preset()
 save_set()
 {
     mkdir -p $JGB_BUILD_BUILD_DIR
-    echo -n > $JGB_BUILD_CONFIG
+    echo -n > $JGB_BUILD_OPTIONS_FILE
     for p in $JGB_BUILD_SAVED ;
     do
-      eval "echo $p=\"\$$p\"" | tee -a $JGB_BUILD_CONFIG
+      eval "echo $p=\"\$$p\"" | tee -a $JGB_BUILD_OPTIONS_FILE
     done
 }
 
 help()
 {
-    echo "[用法] jgb-build [-chirRst:vw]"
+    echo "[Usage] jgb-build [-chirRsvw] [-p <aarch64>] [-t <Release|Debug>]"
     echo "-c 启用代码覆盖编译选项"
     echo "-h 打印帮助信息"
     echo "-i 执行安装"
     echo "-r 启用源文件相对路径编译选项"
+    echo "-p 选择目标架构"
     echo "-R 先作清除，再重新构建"
     echo "-s 启用 sanitize"
-    echo "-t [Release|Debug] 选择构建类型"
+    echo "-t 选择构建类型"
     echo "-v 启用 VERBOSE"
     echo "-w 启用编译警告选项"
     exit 1
 } >&2
-
-. jgb-helper
 
 goto_top_dir
 preset
@@ -101,8 +101,8 @@ if [ "$JGB_BUILD_REBULD" == yes ] ; then
 fi
 
 # 载入记忆配置
-if [ -f $JGB_BUILD_CONFIG ] ; then
-  . $JGB_BUILD_CONFIG
+if [ -f $JGB_BUILD_OPTIONS_FILE ] ; then
+  . $JGB_BUILD_OPTIONS_FILE
 fi
 
 # https://stackoverflow.com/questions/2189281/how-to-call-getopts-in-bash-multiple-times
@@ -116,6 +116,9 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       ;;
     i)
       JGB_BUILD_INSTALL=yes
+      ;;
+    p)
+      JGB_BUILD_TARGET_ARCH=${OPTARG}
       ;;
     r)
       JGB_BUILD_RELATIVE_PATH=yes
@@ -140,11 +143,27 @@ done
 # 保存记忆
 save_set
 
+JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
+
+if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
+  JGB_BUILD_TARGET_ARCH="aarch64"
+fi
+
+host_arch=$(uname -p)
+if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
+    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake-${host_arch}-${JGB_BUILD_TARGET_ARCH}.toolchain
+    if [ -f $cmake_toolchain_file ] ; then
+        JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$cmake_toolchain_file"
+    else
+        echo "没有找到 $host_arch-$JGB_BUILD_TARGET_ARCH.toolchain 文件"
+        exit 1
+    fi
+fi
+JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
+
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib -L${JGB_BUILD_DESTDIR}/usr/local/lib"
-
-JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
 
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
   CFLAGS="$CFLAGS -DDEBUG -g -O0"
