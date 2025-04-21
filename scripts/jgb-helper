@@ -46,6 +46,16 @@ goto_top_dir()
   done
 }
 
+jgb_pushd()
+{
+  pushd $1 > /dev/null
+}
+
+jgb_popd()
+{
+  popd > /dev/null
+}
+
 if [ -v JGB_BUILD_DEBUG ] ; then
   set -x
 fi

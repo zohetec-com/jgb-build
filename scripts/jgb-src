@@ -64,7 +64,7 @@ if [ ! -f $package_src_file_cache ] ; then
   wget -c $package_src -O $package_src_file_cache
   if [ -n "$package_chk" ] ; then
     wget -c $package_chk -O $package_chk_file_cache
-    pushd .
+    jgb_pushd .
     cd $JGB_BUILD_CACHE_DIR
     if [[ $package_chk_file == *".sha256" ]] ; then
       sha256sum -c $package_chk_file
@@ -72,7 +72,7 @@ if [ ! -f $package_src_file_cache ] ; then
       echo 不支持的校验文件类型
       exit 1
     fi
-    popd
+    jgb_popd
   fi
 fi
 
@@ -88,6 +88,14 @@ else
   echo 不支持的文件类型
   exit 1
 fi
+
+jgb_pushd .
+cd $package
+for pf in $(ls $JGB_BUILD_CONFIG_DIR/$package/*.patch 2>/dev/null);
+do
+  patch -p1 < $pf
+done
+jgb_popd >/dev/null
 
 echo 完成
 
