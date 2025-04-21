@@ -80,6 +80,7 @@ fi
 # https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
 if [[ $package_src_file == *".tar.gz" ]] \
    || [[ $package_src_file == *".tar.xz" ]] \
+   || [[ $package_src_file == *".tgz" ]] \
    || [[ $package_src_file == *".tar.bz2" ]]; then
   # 假定：解压缩结果的顶级目录名和包名一致。
   tar xf $package_src_file_cache
