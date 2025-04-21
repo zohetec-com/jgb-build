@@ -28,8 +28,13 @@ goto_top_dir()
       if [ -f CMakeLists.txt ] ; then
         if grep -q "^project" CMakeLists.txt ; then
           echo "top directory: $PWD"
+          JGB_BUILD_BACK_END="cmake"
           break
         fi
+      elif [ -f Makefile ] && [ ! -f ../Makefile ] ; then
+        echo "top directory: $PWD"
+        JGB_BUILD_BACK_END="makefile"
+        break
       fi
 
       if [ "$PWD" != / ] ; then

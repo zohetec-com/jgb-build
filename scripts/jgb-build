@@ -91,13 +91,11 @@ while getopts $JGB_BUILD_OPTIONS opt; do
   esac
 done
 
-if [ -f CMakeLists.txt ] ; then
-  JGB_BUILD_BACK_END="cmake"
-fi
-
 if [ "$JGB_BUILD_REBULD" == yes ] ; then
   if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
     rm -rf CMakeFiles CMakeCache.txt $JGB_BUILD_BUILD_DIR
+  elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
+    make clean
   fi
 fi
 
@@ -149,21 +147,6 @@ JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
 if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
   JGB_BUILD_TARGET_ARCH="aarch64"
 fi
-
-host_arch=$(uname -p)
-if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
-    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${host_arch}-${JGB_BUILD_TARGET_ARCH}.toolchain
-    if [ -f $cmake_toolchain_file ] ; then
-        JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$cmake_toolchain_file"
-    else
-        echo "没有找到 $host_arch-$JGB_BUILD_TARGET_ARCH.toolchain 文件"
-        exit 1
-    fi
-    cmake_TryRunResults_file=$JGB_BUILD_CONFIG_DIR/$package_name/${JGB_BUILD_TARGET_ARCH}-TryRunResults.cmake
-    if [ -f $cmake_TryRunResults_file ] ; then
-      JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -C $cmake_TryRunResults_file"
-    fi
-fi
 JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
@@ -205,9 +188,32 @@ if [ "$JGB_BUILD_VERBOSE" == yes ] ; then
 fi
 
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
+  host_arch=$(uname -p)
+  if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
+    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${host_arch}-${JGB_BUILD_TARGET_ARCH}.toolchain
+    if [ -f $cmake_toolchain_file ] ; then
+        JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$cmake_toolchain_file"
+    else
+        echo "没有找到 $host_arch-$JGB_BUILD_TARGET_ARCH.toolchain 文件"
+        exit 1
+    fi
+    cmake_TryRunResults_file=$JGB_BUILD_CONFIG_DIR/$package_name/${JGB_BUILD_TARGET_ARCH}-TryRunResults.cmake
+    if [ -f $cmake_TryRunResults_file ] ; then
+      JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -C $cmake_TryRunResults_file"
+    fi
+  fi
   cmake $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
   cmake  --build $JGB_BUILD_BUILD_DIR
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     cmake --install $JGB_BUILD_BUILD_DIR --prefix=$JGB_BUILD_DESTDIR
+  fi
+elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
+  options_file=$JGB_BUILD_CONFIG_DIR/$package_name/options
+  if [ -f $options_file ] ; then
+    . $options_file
+  fi
+  make $JGB_BUILD_MAKE_OPTIONS
+  if [ "$JGB_BUILD_INSTALL" == yes ] ; then
+    make install DESTDIR=$JGB_BUILD_DESTDIR
   fi
 fi
