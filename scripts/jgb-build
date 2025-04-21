@@ -205,7 +205,7 @@ if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
   cmake $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
   cmake  --build $JGB_BUILD_BUILD_DIR
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
-    cmake --install $JGB_BUILD_BUILD_DIR --prefix=$JGB_BUILD_DESTDIR
+    cmake --install $JGB_BUILD_BUILD_DIR --prefix $JGB_BUILD_DESTDIR
   fi
 elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   options_file=$JGB_BUILD_CONFIG_DIR/$package_name/options
