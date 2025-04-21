@@ -47,6 +47,9 @@ fi
 
 # jgb-build 全局工作目录
 JGB_BUILD_DIR=$HOME/jgb-build.dir
+# jgb-build 配置文件目录
 JGB_BUILD_CONFIG_DIR=$JGB_BUILD_DIR/conf
+# 源码包下载地址
 JGB_BUILD_PACKAGES_FILE=$JGB_BUILD_CONFIG_DIR/packages
+# 缓存下载文件目录
 JGB_BUILD_CACHE_DIR=$JGB_BUILD_DIR/cache

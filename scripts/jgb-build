@@ -77,6 +77,7 @@ help()
 } >&2
 
 goto_top_dir
+package_name=$(basename $PWD)
 preset
 
 while getopts $JGB_BUILD_OPTIONS opt; do
@@ -151,12 +152,16 @@ fi
 
 host_arch=$(uname -p)
 if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
-    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake-${host_arch}-${JGB_BUILD_TARGET_ARCH}.toolchain
+    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${host_arch}-${JGB_BUILD_TARGET_ARCH}.toolchain
     if [ -f $cmake_toolchain_file ] ; then
         JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$cmake_toolchain_file"
     else
         echo "没有找到 $host_arch-$JGB_BUILD_TARGET_ARCH.toolchain 文件"
         exit 1
+    fi
+    cmake_TryRunResults_file=$JGB_BUILD_CONFIG_DIR/$package_name/${JGB_BUILD_TARGET_ARCH}-TryRunResults.cmake
+    if [ -f $cmake_TryRunResults_file ] ; then
+      JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -C $cmake_TryRunResults_file"
     fi
 fi
 JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
@@ -191,8 +196,8 @@ if [ "$JGB_BUILD_RELATIVE_PATH" == yes ] ; then
   # 参考
   # 1 https://cmake.cmake.narkive.com/doNN52ay/file-relative-path
   # 2 https://stackoverflow.com/questions/8487986/file-macro-shows-full-path
-  CFLAGS="$CFLAGS -ffile-prefix-map=$PWD=$(basename $PWD)"
-  CXXFLAGS="$CXXFLAGS -ffile-prefix-map=$PWD=$(basename $PWD)"
+  CFLAGS="$CFLAGS -ffile-prefix-map=$PWD=$package_name"
+  CXXFLAGS="$CXXFLAGS -ffile-prefix-map=$PWD=$package_name"
 fi
 
 if [ "$JGB_BUILD_VERBOSE" == yes ] ; then
