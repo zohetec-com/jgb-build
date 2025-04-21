@@ -1,0 +1,8 @@
+flex
+bison
+cmake
+build-essential
+gcc-14-aarch64-linux-gnu
+g++-14-aarch64-linux-gnu
+g++-aarch64-linux-gnu
+gcc-aarch64-linux-gnu
