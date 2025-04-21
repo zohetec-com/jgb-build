@@ -35,7 +35,7 @@ package=$1
 
 if [ -d $package ] ; then
   if [ "$O_Remove" == yes ] ; then
-    rm -r $package
+    rm -rf $package
   else
     echo "包 $package 已存在"
     exit 1
@@ -78,7 +78,9 @@ fi
 
 [ ! -d $package ]
 # https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
-if [[ $package_src_file == *".tar.gz" ]] ; then
+if [[ $package_src_file == *".tar.gz" ]] \
+   || [[ $package_src_file == *".tar.xz" ]] \
+   || [[ $package_src_file == *".tar.bz2" ]]; then
   # 假定：解压缩结果的顶级目录名和包名一致。
   tar xf $package_src_file_cache
 else
