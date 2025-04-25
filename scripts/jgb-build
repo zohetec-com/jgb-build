@@ -94,8 +94,8 @@ done
 if [ "$JGB_BUILD_REBULD" == yes ] ; then
   if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
     rm -rf CMakeFiles CMakeCache.txt $JGB_BUILD_BUILD_DIR
-  elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
-    make clean
+  elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] || [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
+    make clean || true
   fi
 fi
 
@@ -147,7 +147,8 @@ JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
 if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
   JGB_BUILD_TARGET_ARCH="aarch64"
 fi
-JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
+# 适配 ubuntu 目录布局。
+JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH/usr"
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
@@ -187,8 +188,8 @@ if [ "$JGB_BUILD_VERBOSE" == yes ] ; then
   JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=ON"
 fi
 
+host_arch=$(uname -p)
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
-  host_arch=$(uname -p)
   if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
     cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${host_arch}-${JGB_BUILD_TARGET_ARCH}.toolchain
     if [ -f $cmake_toolchain_file ] ; then
@@ -206,6 +207,30 @@ if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
   cmake  --build $JGB_BUILD_BUILD_DIR
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     cmake --install $JGB_BUILD_BUILD_DIR --prefix $JGB_BUILD_DESTDIR
+  fi
+elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
+  if [ ! -f configure ] ; then
+    if [ -x autogen.sh ]  ; then
+      ./autogen.sh
+    elif [ -x bootstrap.sh ] ; then
+      ./bootstrap.sh
+    else
+      jgb-autogen
+    fi
+  fi
+  if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
+    ac_toolchain_file=$JGB_BUILD_CONFIG_DIR/autoconf/autoconf.toolchain
+    if [ -f $ac_toolchain_file ] ; then
+      . $ac_toolchain_file
+    fi
+  fi
+  if [ -f configure ] ; then
+    ./configure --prefix=$JGB_BUILD_DESTDIR ${JGB_BUILD_CONFIGURE_OPTIONS[$JGB_BUILD_TARGET_ARCH]}
+    make
+    make install
+  else
+    echo "configure not found"
+    exit 1
   fi
 elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   options_file=$JGB_BUILD_CONFIG_DIR/$package_name/options
