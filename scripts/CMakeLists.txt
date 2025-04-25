@@ -7,4 +7,5 @@ install(PROGRAMS
     jgb-lcov
     jgb-disable-aslr
     jgb-rebuild-debug
+    jgb-run-release
     DESTINATION bin)
