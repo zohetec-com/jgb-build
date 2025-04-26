@@ -2,6 +2,9 @@
 set -e
 . jgb-helper
 
+O_Patch=yes
+O_Remove=no
+
 help()
 {
     echo "[Usage] jgb-src [-h] package"
@@ -9,10 +12,13 @@ help()
     exit 1
 } >&2
 
-while getopts  "Rh" opt; do
+while getopts  "PRh" opt; do
   case ${opt} in
     h)
       help
+      ;;
+    P)
+      O_Patch=no
       ;;
     R)
       O_Remove=yes
@@ -89,13 +95,16 @@ else
   exit 1
 fi
 
-jgb_pushd .
-cd $package
-for pf in $(ls $JGB_BUILD_CONFIG_DIR/$package/*.patch 2>/dev/null);
-do
-  patch -p1 < $pf
-done
-jgb_popd >/dev/null
+if [ $O_Patch == yes ] ; then
+  jgb_pushd .
+  cd $package
+  for pf in $(ls $JGB_BUILD_CONFIG_DIR/$package/*.patch 2>/dev/null);
+  do
+    patch -p1 < $pf
+  done
+  jgb_popd >/dev/null
+else
+  echo "已跳过应用补丁"
+fi
 
 echo 完成
-

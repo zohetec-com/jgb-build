@@ -31,7 +31,7 @@ goto_top_dir()
           JGB_BUILD_BACK_END="cmake"
           break
         fi
-      elif [ -f configure.ac ] || [ -f configure ] ; then
+      elif [ -f configure.ac ] || [ -x configure ] ; then
         echo "top directory: $PWD"
         JGB_BUILD_BACK_END="autoconf"
         break
@@ -67,8 +67,8 @@ fi
 # jgb-build 全局工作目录
 JGB_BUILD_DIR=$HOME/jgb-build.dir
 # jgb-build 配置文件目录
-JGB_BUILD_CONFIG_DIR=$JGB_BUILD_DIR/conf
+JGB_BUILD_CONFIG_DIR=$JGB_BUILD_DIR/conf.dir
 # 源码包下载地址
 JGB_BUILD_PACKAGES_FILE=$JGB_BUILD_CONFIG_DIR/upstream
 # 缓存下载文件目录
-JGB_BUILD_CACHE_DIR=$JGB_BUILD_DIR/cache
+JGB_BUILD_CACHE_DIR=$JGB_BUILD_DIR/cache.dir

@@ -36,27 +36,29 @@ JGB_BUILD_SAVED="\
 JGB_BUILD_OPTIONS="chip:rRst:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
-JGB_BUILD_OPTIONS_FILE="$JGB_BUILD_BUILD_DIR/jgb-options"
+JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
 
 preset()
 {
-    JGB_BUILD_TARGET_ARCH=$(uname -p)
-    JGB_BUILD_TYPE="Release"
+    export JGB_BUILD_BUILD_ARCH=$(uname -p)
+    export JGB_BUILD_TARGET_ARCH=$(uname -p)
+    export JGB_BUILD_TYPE="Release"
     JGB_BUILD_COVERAGE=no
     JGB_BUILD_SANITIZE=no
     JGB_BUILD_WALL=no
     JGB_BUILD_VERBOSE=no
     JGB_BUILD_INSTALL=no
     JGB_BUILD_RELATIVE_PATH=no
+    export JGB_BUILD_CONFIGURE_OPTIONS_HOST=yes
 }
 
 save_set()
 {
     mkdir -p $JGB_BUILD_BUILD_DIR
-    echo -n > $JGB_BUILD_OPTIONS_FILE
+    echo -n > $JGB_BUILD_CACHE_FILE
     for p in $JGB_BUILD_SAVED ;
     do
-      eval "echo $p=\"\$$p\"" | tee -a $JGB_BUILD_OPTIONS_FILE
+      eval "echo $p=\"\$$p\"" | tee -a $JGB_BUILD_CACHE_FILE
     done
 }
 
@@ -100,8 +102,8 @@ if [ "$JGB_BUILD_REBULD" == yes ] ; then
 fi
 
 # 载入记忆配置
-if [ -f $JGB_BUILD_OPTIONS_FILE ] ; then
-  . $JGB_BUILD_OPTIONS_FILE
+if [ -f $JGB_BUILD_CACHE_FILE ] ; then
+  . $JGB_BUILD_CACHE_FILE
 fi
 
 # https://stackoverflow.com/questions/2189281/how-to-call-getopts-in-bash-multiple-times
@@ -148,7 +150,7 @@ if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
   JGB_BUILD_TARGET_ARCH="aarch64"
 fi
 # 适配 ubuntu 目录布局。
-JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH/usr"
+export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH/usr"
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
@@ -185,31 +187,34 @@ if [ "$JGB_BUILD_RELATIVE_PATH" == yes ] ; then
 fi
 
 if [ "$JGB_BUILD_VERBOSE" == yes ] ; then
-  JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_VERBOSE_MAKEFILE=ON"
+  JGB_BUILD_CMAKE_OPTIONS+=" -DCMAKE_VERBOSE_MAKEFILE=ON"
 fi
 
-host_arch=$(uname -p)
+options_file=$JGB_BUILD_CONFIG_DIR/$package_name/options
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
-  if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
-    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${host_arch}-${JGB_BUILD_TARGET_ARCH}.toolchain
+  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
+    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}.toolchain
     if [ -f $cmake_toolchain_file ] ; then
-        JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -DCMAKE_TOOLCHAIN_FILE=$cmake_toolchain_file"
+        JGB_BUILD_CMAKE_OPTIONS+=" -DCMAKE_TOOLCHAIN_FILE=$cmake_toolchain_file"
     else
-        echo "没有找到 $host_arch-$JGB_BUILD_TARGET_ARCH.toolchain 文件"
+        echo "没有找到 $JGB_BUILD_BUILD_ARCH-$JGB_BUILD_TARGET_ARCH.toolchain 文件"
         exit 1
     fi
     cmake_TryRunResults_file=$JGB_BUILD_CONFIG_DIR/$package_name/${JGB_BUILD_TARGET_ARCH}-TryRunResults.cmake
     if [ -f $cmake_TryRunResults_file ] ; then
-      JGB_BUILD_CMAKE_OPTIONS="$JGB_BUILD_CMAKE_OPTIONS -C $cmake_TryRunResults_file"
+      JGB_BUILD_CMAKE_OPTIONS+=" -C $cmake_TryRunResults_file"
     fi
   fi
-  cmake $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
+  if [ -f $options_file ] ; then
+    . $options_file
+  fi
+  cmake -DCMAKE_INSTALL_PREFIX=$JGB_BUILD_DESTDIR $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
   cmake  --build $JGB_BUILD_BUILD_DIR
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
-    cmake --install $JGB_BUILD_BUILD_DIR --prefix $JGB_BUILD_DESTDIR
+    cmake --install $JGB_BUILD_BUILD_DIR
   fi
 elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
-  if [ ! -f configure ] ; then
+  if [ ! -x configure ] ; then
     if [ -x autogen.sh ]  ; then
       ./autogen.sh
     elif [ -x bootstrap.sh ] ; then
@@ -218,14 +223,21 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
       jgb-autogen
     fi
   fi
-  if [ "$host_arch" != $JGB_BUILD_TARGET_ARCH ] ; then
-    ac_toolchain_file=$JGB_BUILD_CONFIG_DIR/autoconf/autoconf.toolchain
-    if [ -f $ac_toolchain_file ] ; then
-      . $ac_toolchain_file
+  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
+    ac_cross_config=$JGB_BUILD_CONFIG_DIR/autoconf/cross.config
+    if [ -f $ac_cross_config ] ; then
+      . $ac_cross_config
     fi
   fi
-  if [ -f configure ] ; then
-    ./configure --prefix=$JGB_BUILD_DESTDIR ${JGB_BUILD_CONFIGURE_OPTIONS[$JGB_BUILD_TARGET_ARCH]}
+  if [ -f $options_file ] ; then
+    . $options_file
+  fi
+  if [ "$JGB_BUILD_CONFIGURE_OPTIONS_HOST" == yes ] ; then
+    [ -n "${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}" ]
+    JGB_BUILD_CONFIGURE_OPTIONS=" --host=${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}"
+  fi
+  if [ -x configure ] ; then
+    ./configure --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_CONFIGURE_OPTIONS $JGB_BUILD_CONFIGURE_OPTIONS_EXTRA
     make
     make install
   else
@@ -233,7 +245,6 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     exit 1
   fi
 elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
-  options_file=$JGB_BUILD_CONFIG_DIR/$package_name/options
   if [ -f $options_file ] ; then
     . $options_file
   fi
