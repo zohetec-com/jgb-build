@@ -7,3 +7,5 @@ jgb.build/
 *.cxxflags
 *.files
 *.includes
+test/arm64/
+test/x86_64/
