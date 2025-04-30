@@ -49,7 +49,15 @@ preset()
     JGB_BUILD_VERBOSE=no
     JGB_BUILD_INSTALL=no
     JGB_BUILD_RELATIVE_PATH=no
+    # JGB_BUILD_CONFIGURE_OPTIONS_HOST
+    # yes 对于 autoconf 项目，当执行交叉编译时， 应当为 configure 设置 --host 选项。
     export JGB_BUILD_CONFIGURE_OPTIONS_HOST=yes
+
+    # for make
+    export JGB_BUILD_MAKE_OPTIONS=
+
+    # for make install
+    export JGB_BUILD_MAKE_INSTALL_OPTIONS=
 }
 
 save_set()
@@ -223,6 +231,9 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
       jgb-autogen
     fi
   fi
+  # 执行顺序
+  # 1 包含 cross.config。
+  # 2 包含项目的 options。理由：options 可能需要引用 cross.config 中的信息，如交叉工具链的名称。
   if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
     ac_cross_config=$JGB_BUILD_CONFIG_DIR/autoconf/cross.config
     if [ -f $ac_cross_config ] ; then
@@ -232,14 +243,16 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
   if [ -f $options_file ] ; then
     . $options_file
   fi
-  if [ "$JGB_BUILD_CONFIGURE_OPTIONS_HOST" == yes ] ; then
-    [ -n "${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}" ]
-    JGB_BUILD_CONFIGURE_OPTIONS=" --host=${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}"
+  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
+    if [ "$JGB_BUILD_CONFIGURE_OPTIONS_HOST" == yes ] ; then
+      [ -n "${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}" ]
+      JGB_BUILD_CONFIGURE_OPTIONS=" --host=${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}"
+    fi
   fi
   if [ -x configure ] ; then
     ./configure --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_CONFIGURE_OPTIONS $JGB_BUILD_CONFIGURE_OPTIONS_EXTRA
-    make
-    make install
+    make $JGB_BUILD_MAKE_OPTIONS
+    make install $JGB_BUILD_MAKE_INSTALL_OPTIONS
   else
     echo "configure not found"
     exit 1
@@ -250,6 +263,6 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   fi
   make $JGB_BUILD_MAKE_OPTIONS
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
-    make install DESTDIR=$JGB_BUILD_DESTDIR
+    make install DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
 fi
