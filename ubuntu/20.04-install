@@ -2,9 +2,9 @@ flex
 bison
 cmake
 build-essential
-git
 gcc-10-aarch64-linux-gnu
 g++-10-aarch64-linux-gnu
 g++-aarch64-linux-gnu
 gcc-aarch64-linux-gnu
+git
 tree
