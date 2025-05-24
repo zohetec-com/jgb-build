@@ -170,8 +170,8 @@ if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
 fi
 
 if [ "$JGB_BUILD_COVERAGE" == yes ] ; then
-  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
-  CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage"
+  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fprofile-update=atomic"
+  CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage -fprofile-update=atomic"
 fi
 
 if [ "$JGB_BUILD_SANITIZE" == yes ] ; then
@@ -185,7 +185,7 @@ if [ "$JGB_BUILD_WALL" == yes ] ; then
   CXXFLAGS="$CXXFLAGS -Werror -Wall -Wextra"
 fi
 
-if [ "$JGB_BUILD_RELATIVE_PATH" == yes ] ; then
+if [ "$JGB_BUILD_RELATIVE_PATH" == yes ] && [ "$JGB_BUILD_COVERAGE" != yes ] ; then
   # [1] says：__FILE__ is implemented by the compiler, it has nothing to do with CMake.
   # 参考
   # 1 https://cmake.cmake.narkive.com/doNN52ay/file-relative-path
