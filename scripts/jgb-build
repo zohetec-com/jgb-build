@@ -32,8 +32,9 @@ JGB_BUILD_SAVED="\
   JGB_BUILD_WALL \
   JGB_BUILD_VERBOSE \
   JGB_BUILD_INSTALL \
+  JGB_BUILD_PACK \
   JGB_BUILD_RELATIVE_PATH"
-JGB_BUILD_OPTIONS="chip:rRst:vw"
+JGB_BUILD_OPTIONS="chiPp:rRst:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
@@ -48,6 +49,7 @@ preset()
     JGB_BUILD_WALL=no
     JGB_BUILD_VERBOSE=no
     JGB_BUILD_INSTALL=no
+    JGB_BUILD_PACK=no
     JGB_BUILD_RELATIVE_PATH=no
     # JGB_BUILD_CONFIGURE_OPTIONS_HOST
     # yes 对于 autoconf 项目，当执行交叉编译时， 应当为 configure 设置 --host 选项。
@@ -87,6 +89,7 @@ help()
 } >&2
 
 goto_top_dir
+JGB_BUILD_TOP_DIR=$PWD
 package_name=$(basename $PWD)
 preset
 
@@ -126,6 +129,10 @@ while getopts $JGB_BUILD_OPTIONS opt; do
     i)
       JGB_BUILD_INSTALL=yes
       ;;
+    P)
+      JGB_BUILD_PACK=yes
+      JGB_BUILD_INSTALL=yes
+      ;;
     p)
       JGB_BUILD_TARGET_ARCH=${OPTARG}
       ;;
@@ -159,6 +166,13 @@ if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
 fi
 # 适配 ubuntu 目录布局。
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH/usr"
+if [ "$JGB_BUILD_PACK" == yes ] ; then
+  output_dir=${JGB_BUILD_TOP_DIR}/output/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}
+  package_file_name=${output_dir}/${package_name}-$(date +%Y%m%d).tar.gz
+  mkdir -p $output_dir
+  destdir="./$(mktemp -d jgb-build.XXXXXX)"
+  export DESTDIR=$destdir
+fi
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/local/include"
@@ -267,4 +281,10 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     make install DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
+fi
+if [ "$JGB_BUILD_PACK" == yes ] ; then
+  [ -d $destdir ]
+  tar -czf $package_file_name -C $destdir .
+  rm $destdir -rf
+  echo "打包完成: $package_file_name"
 fi
