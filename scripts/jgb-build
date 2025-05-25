@@ -252,7 +252,9 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
   if [ -x configure ] ; then
     ./configure --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_CONFIGURE_OPTIONS $JGB_BUILD_CONFIGURE_OPTIONS_EXTRA
     make $JGB_BUILD_MAKE_OPTIONS
-    make install $JGB_BUILD_MAKE_INSTALL_OPTIONS
+    if [ "$JGB_BUILD_INSTALL" == yes ] ; then
+      make install $JGB_BUILD_MAKE_INSTALL_OPTIONS
+    fi
   else
     echo "configure not found"
     exit 1
