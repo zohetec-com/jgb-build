@@ -167,8 +167,9 @@ fi
 # 适配 ubuntu 目录布局。
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH/usr"
 if [ "$JGB_BUILD_PACK" == yes ] ; then
-  output_dir=${JGB_BUILD_TOP_DIR}/output/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}
-  package_file_name=${output_dir}/${package_name}-$(date +%Y%m%d).tar.gz
+  output_dir=${JGB_BUILD_TOP_DIR}/output/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
+  package_file_name=${package_name}-$(date +%Y%m%d).tar.gz
+  package_file_name_short=${package_name}.tar.gz
   mkdir -p $output_dir
   destdir="./$(mktemp -d jgb-build.XXXXXX)"
   export DESTDIR=$destdir
@@ -284,7 +285,8 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
 fi
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   [ -d $destdir ]
-  tar -czf $package_file_name -C $destdir .
+  tar -czf ${output_dir}/${package_file_name} -C $destdir .
+  ln -sf ${package_file_name} ${output_dir}/${package_file_name_short}
   rm $destdir -rf
   echo "打包完成: $package_file_name"
 fi
