@@ -22,6 +22,7 @@ jr_version=$(jq -r .version $jr_list_file)
 
 for m in Debug Release
 do
+  rm $m -rf
   mkdir -p $m
   x=0
   while true;
@@ -30,8 +31,11 @@ do
     if [ $pk != null ] ; then
         pk_file=${pk}.tar.gz
         pk_file_path=${JGB_BUILD_DIR}/package/$m/$jr_arch/$pk/$pk_file
-        [ -f $pk_file_path ]
-        echo "extract $pk"
+        if [ ! -f $pk_file_path ] ; then
+          echo "not found: $pk"
+          exit 1
+        fi
+        echo "extract: $pk"
         tar -C $m -xf $pk_file_path
         ((++x))
     else
