@@ -43,9 +43,12 @@ do
     fi
   done
   re_file=${jgb_release}_${jgb_version}_$(date +%Y%m%d).tar.gz
+  re_file_short=${jgb_release}.tar.gz
   re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$jgb_arch
   re_file_path=$re_dir/$re_file
+  re_file_short_path=$re_dir/$re_file_short
   mkdir -p $re_dir
   tar -C $m -czf $re_file_path .
+  ln -sf $re_file $re_file_short_path
   echo created: $re_file_path
 done
