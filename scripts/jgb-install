@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e
+
+. jgb-helper
+jgb_arch=$(uname -p)
+
+while getopts  "p:" opt; do
+  case ${opt} in
+    p)
+      jgb_arch=$OPTARG
+      ;;
+    ?)
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+pk=$1
+pk_file=${pk}.tar.gz
+for m in Debug Release
+do
+    pk_file_path=${JGB_BUILD_DIR}/package/$m/$jgb_arch/$pk/$pk_file
+    if [ ! -f $pk_file_path ] ; then
+      echo "not found: $pk"
+      exit 1
+    fi
+    echo "extract: $pk"
+    dest_dir=${JGB_BUILD_DIR}/$m/$jgb_arch
+    tar -C $dest_dir -xf $pk_file_path
+done
