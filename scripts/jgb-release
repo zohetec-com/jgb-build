@@ -1,0 +1,47 @@
+#!/bin/bash
+set -e
+
+. jgb-helper
+
+jr_arch=$(uname -p)
+while getopts f:p: opt; do
+  case ${opt} in
+    f)
+      jr_list_file=$OPTARG
+      ;;
+    p)
+      jr_arch=$OPTARG
+      ;;
+    ?)
+      ;;
+  esac
+done
+
+jr_release=$(jq -r .release $jr_list_file)
+jr_version=$(jq -r .version $jr_list_file)
+
+for m in Debug Release
+do
+  mkdir -p $m
+  x=0
+  while true;
+  do
+    pk=$(jq -r .packages[$x] $jr_list_file)
+    if [ $pk != null ] ; then
+        pk_file=${pk}.tar.gz
+        pk_file_path=${JGB_BUILD_DIR}/package/$m/$jr_arch/$pk/$pk_file
+        [ -f $pk_file_path ]
+        echo "extract $pk"
+        tar -C $m -xf $pk_file_path
+        ((++x))
+    else
+        break
+    fi
+  done
+  re_file=${jr_release}_${jr_version}_$(date +%Y%m%d).tar.gz
+  re_dir=${JGB_BUILD_DIR}/release/${jr_release}/$m/$jr_arch
+  re_file_path=$re_dir/$re_file
+  mkdir -p $re_dir
+  tar -C $m -czf $re_file_path .
+  echo created: $re_file_path
+done

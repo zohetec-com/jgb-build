@@ -164,10 +164,10 @@ JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
 if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
   JGB_BUILD_TARGET_ARCH="aarch64"
 fi
-# 适配 ubuntu 目录布局。
+# 适配 ubuntu 目录布局：/lib,/bin 等都是软连接，指向 /usr 目录下同名目录。
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH/usr"
 if [ "$JGB_BUILD_PACK" == yes ] ; then
-  output_dir=${JGB_BUILD_TOP_DIR}/output/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
+  output_dir=${JGB_BUILD_DIR}/package/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
   package_file_name=${package_name}-$(date +%Y%m%d).tar.gz
   package_file_name_short=${package_name}.tar.gz
   mkdir -p $output_dir
@@ -285,7 +285,7 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
 fi
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   [ -d $destdir ]
-  tar -czf ${output_dir}/${package_file_name} -C $destdir .
+  tar -czf ${output_dir}/${package_file_name} -C $destdir/$JGB_BUILD_DESTDIR/.. .
   ln -sf ${package_file_name} ${output_dir}/${package_file_name_short}
   rm $destdir -rf
   echo "打包完成: $package_file_name"

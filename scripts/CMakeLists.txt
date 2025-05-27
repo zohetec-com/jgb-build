@@ -1,6 +1,7 @@
 install(PROGRAMS
     jgb-helper
     jgb-build
+    jgb-release
     jgb-autogen.sh
     jgb-src
     jgb-run-debug
