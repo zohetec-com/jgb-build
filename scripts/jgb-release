@@ -17,6 +17,10 @@ while getopts f:p: opt; do
   esac
 done
 
+if [ jgb_arch == arm64 ] ; then
+  jgb_arch=aarch64
+fi
+
 jgb_release=$(jq -r .release $jgb_list_file)
 jgb_version=$(jq -r .version $jgb_list_file)
 
@@ -42,8 +46,8 @@ do
         break
     fi
   done
-  re_file=${jgb_release}_${jgb_version}_$(date +%Y%m%d).tar.gz
-  re_file_short=${jgb_release}.tar.gz
+  re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${jgb_arch}.tar.gz
+  re_file_short=${jgb_release}_${jgb_arch}.tar.gz
   re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$jgb_arch
   re_file_path=$re_dir/$re_file
   re_file_short_path=$re_dir/$re_file_short
