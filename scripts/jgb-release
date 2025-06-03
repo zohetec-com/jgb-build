@@ -55,6 +55,11 @@ do
         break
     fi
   done
+  chksum_file=/tmp/$(mktemp jgb-release.XXXX)
+  cd $m
+  find . -type f  -exec sha256sum {} \; > $chksum_file
+  cd ..
+  mv $chksum_file $m/sha256sum.txt
   re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${jgb_arch}.tar.gz
   re_file_short=${jgb_release}_${jgb_arch}.tar.gz
   re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$jgb_arch
