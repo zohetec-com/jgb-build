@@ -3,7 +3,6 @@ set -e
 
 . jgb-helper
 
-jgb_arch=$(uname -p)
 while getopts f:p: opt; do
   case ${opt} in
     f)
@@ -17,12 +16,22 @@ while getopts f:p: opt; do
   esac
 done
 
-if [ jgb_arch == arm64 ] ; then
-  jgb_arch=aarch64
-fi
-
 jgb_release=$(jq -r .release $jgb_list_file)
 jgb_version=$(jq -r .version $jgb_list_file)
+jgb_exclude=$(jq -r .exclude $jgb_list_file)
+
+if [ -n "$jgb_exclude" ] ; then
+  [ -r $jgb_exclude ]
+  tar_opt_extra="-X $jgb_exclude"
+fi
+
+if [ -z "$jgb_arch" ] ; then
+  jgb_arch=$(uname -p)
+fi
+
+if [ "$jgb_arch" == arm64 ] ; then
+  jgb_arch=aarch64
+fi
 
 for m in Debug Release
 do
@@ -40,7 +49,7 @@ do
           exit 1
         fi
         echo "extract: $pk"
-        tar -C $m -xf $pk_file_path
+        tar -C $m -xf $pk_file_path $tar_opt_extra
         ((++x))
     else
         break
