@@ -55,7 +55,7 @@ do
         break
     fi
   done
-  chksum_file=/tmp/$(mktemp jgb-release.XXXX)
+  chksum_file=$(mktemp /tmp/jgb-release.XXXX)
   cd $m
   find . -type f  -exec sha256sum {} \; > $chksum_file
   cd ..
