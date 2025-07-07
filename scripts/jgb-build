@@ -171,7 +171,7 @@ if [ "$JGB_BUILD_PACK" == yes ] ; then
   package_file_name=${package_name}-$(date +%Y%m%d).tar.gz
   package_file_name_short=${package_name}.tar.gz
   mkdir -p $output_dir
-  destdir="./$(mktemp -d jgb-build.XXXXXX)"
+  destdir="$PWD/$(mktemp -d jgb-build.XXXXXX)"
   export DESTDIR=$destdir
 fi
 
@@ -243,7 +243,7 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     elif [ -x bootstrap.sh ] ; then
       ./bootstrap.sh
     else
-      jgb-autogen
+      jgb-autogen.sh
     fi
   fi
   # 执行顺序
