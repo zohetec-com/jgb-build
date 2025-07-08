@@ -104,8 +104,9 @@ while getopts $JGB_BUILD_OPTIONS opt; do
 done
 
 if [ "$JGB_BUILD_REBULD" == yes ] ; then
+  rm -rf $JGB_BUILD_BUILD_DIR
   if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
-    rm -rf CMakeFiles CMakeCache.txt $JGB_BUILD_BUILD_DIR
+    rm -rf CMakeFiles CMakeCache.txt
   elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] || [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
     make clean || true
   fi
