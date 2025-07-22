@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+. jgb-helper
+jgb_arch=$(uname -p)
+
+while getopts  "p:" opt; do
+  case ${opt} in
+    p)
+      jgb_arch=$OPTARG
+      ;;
+    ?)
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+pk=$1
+for m in Debug Release
+do
+    jgb-build -Ri -p${jgb_arch} -t${m} -P
+done
