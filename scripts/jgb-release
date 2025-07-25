@@ -40,15 +40,21 @@ do
   x=0
   while true;
   do
-    pk=$(jq -r .packages[$x] $jgb_list_file)
-    if [ $pk != null ] ; then
-        pk_file=${pk}.tar.gz
+    pk_full_name=$(jq -r .packages[$x] $jgb_list_file)
+    if [ $pk_full_name != null ] ; then
+        pk=$(echo $pk_full_name | cut -d@ -f1)
+        var=$(echo $pk_full_name | cut -d@ -f2 -s)
+        x_var=
+        if [ -n "$var" ] ; then
+          x_var="_${var}"
+        fi
+        pk_file=${pk}${x_var}.tar.gz
         pk_file_path=${JGB_BUILD_DIR}/package/$m/$jgb_arch/$pk/$pk_file
         if [ ! -f $pk_file_path ] ; then
           echo "not found: $pk"
           exit 1
         fi
-        echo "extract: $pk"
+        echo "extract: $pk_full_name"
         tar -C $m -xf $pk_file_path $tar_opt_extra
         ((++x))
     else

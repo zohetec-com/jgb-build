@@ -4,8 +4,14 @@ set -e
 . jgb-helper
 jgb_arch=$(uname -p)
 
-while getopts  "p:" opt; do
+while getopts  "bBp:" opt; do
   case ${opt} in
+    b)
+      extra="-b"
+      ;;
+    B)
+      extra="-B"
+      ;;
     p)
       jgb_arch=$OPTARG
       ;;
@@ -14,9 +20,7 @@ while getopts  "p:" opt; do
   esac
 done
 
-shift $((OPTIND - 1))
-pk=$1
 for m in Debug Release
 do
-    jgb-build -Ri -p${jgb_arch} -t${m} -P
+    jgb-build -Ri -p${jgb_arch} -t${m} -P $extra
 done

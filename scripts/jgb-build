@@ -33,7 +33,7 @@ JGB_BUILD_SAVED="\
   JGB_BUILD_VERBOSE \
   JGB_BUILD_INSTALL \
   JGB_BUILD_RELATIVE_PATH"
-JGB_BUILD_OPTIONS="chiPp:rRst:vw"
+JGB_BUILD_OPTIONS="bBchiPp:rRst:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
@@ -121,6 +121,12 @@ fi
 unset OPTIND
 while getopts $JGB_BUILD_OPTIONS opt; do
   case ${opt} in
+    b)
+      JGB_BUILD_INDICATE_VARIANT=branch
+      ;;
+    B)
+      JGB_BUILD_INDICATE_VARIANT=tag
+      ;;
     c)
       JGB_BUILD_COVERAGE=yes
       ;;
@@ -168,8 +174,16 @@ fi
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH/usr"
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   output_dir=${JGB_BUILD_DIR}/package/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
-  package_file_name=${package_name}-$(date +%Y%m%d).tar.gz
-  package_file_name_short=${package_name}.tar.gz
+  if [ "$JGB_BUILD_INDICATE_VARIANT" == "branch" ] ; then
+    var_name=$(git rev-parse --abbrev-ref HEAD)
+  elif [ "$JGB_BUILD_INDICATE_VARIANT" == "tag" ] ; then
+    var_name=$(git describe --tags --abbrev=0)
+  fi
+  if [ -n "$var_name" ] ; then
+    x_var="_${var_name}"
+  fi
+  package_file_name=${package_name}${x_var}-$(date +%Y%m%d).tar.gz
+  package_file_name_short=${package_name}${x_var}.tar.gz
   mkdir -p $output_dir
   destdir="$PWD/$(mktemp -d jgb-build.XXXXXX)"
   export DESTDIR=$destdir
