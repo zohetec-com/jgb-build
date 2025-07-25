@@ -60,6 +60,10 @@ do
   find . -type f  -exec sha256sum {} \; > $chksum_file
   cd ..
   mv $chksum_file $m/sha256sum.txt
+  # https://phoenixnap.com/kb/bash-heredoc
+  cat << EOF > $m/release.json
+  {"release":"$jgb_release","version":"$jgb_version","date":"$(date)"}
+EOF
   re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${jgb_arch}.tar.gz
   re_file_short=${jgb_release}_${jgb_arch}.tar.gz
   re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$jgb_arch
