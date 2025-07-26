@@ -54,57 +54,85 @@ if [ -z "$package_src" ] ; then
   exit 1
 fi >&2
 
-package_chksum=${jgb_src_chksum[$package]}
-if [ -n "$package_chksum" ] ; then
-  package_chksum_file=$(basename $package_chksum)
-  package_chksum_file_cache=$JGB_BUILD_CACHE_DIR/$package_chksum_file
-else
-  echo "$JGB_BUILD_PACKAGES_FILE 文件中未指定 jgb_src_chksum[$package]"
-fi >&2
-
-package_src_file=$(basename $package_src)
-package_src_file_cache=$JGB_BUILD_CACHE_DIR/$package_src_file
-
-if [ ! -f $package_src_file_cache ] ; then
-  mkdir -p $JGB_BUILD_CACHE_DIR
-  wget -c $package_src -O $package_src_file_cache
+process_zip_src()
+{
+  package_chksum=${jgb_src_chksum[$package]}
   if [ -n "$package_chksum" ] ; then
-    wget -c $package_chksum -O $package_chksum_file_cache
-    jgb_pushd .
-    cd $JGB_BUILD_CACHE_DIR
-    if [[ $package_chksum_file == *".sha256" ]] ; then
-      sha256sum -c $package_chksum_file
-    else
-      echo 不支持的校验文件类型
-      exit 1
+    package_chksum_file=$(basename $package_chksum)
+    package_chksum_file_cache=$JGB_BUILD_CACHE_DIR/$package_chksum_file
+  else
+    echo "$JGB_BUILD_PACKAGES_FILE 文件中未指定 jgb_src_chksum[$package]"
+  fi >&2
+
+  package_src_file=$(basename $package_src)
+  package_src_file_cache=$JGB_BUILD_CACHE_DIR/$package_src_file
+
+  if [ ! -f $package_src_file_cache ] ; then
+    mkdir -p $JGB_BUILD_CACHE_DIR
+    wget -c $package_src -O $package_src_file_cache
+    if [ -n "$package_chksum" ] ; then
+      wget -c $package_chksum -O $package_chksum_file_cache
+      jgb_pushd .
+      cd $JGB_BUILD_CACHE_DIR
+      if [[ $package_chksum_file == *".sha256" ]] ; then
+        sha256sum -c $package_chksum_file
+      else
+        echo 不支持的校验文件类型
+        exit 1
+      fi
+      jgb_popd
     fi
-    jgb_popd
   fi
-fi
 
-[ ! -d $package ]
-# https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
-if [[ $package_src_file == *".tar.gz" ]] \
-   || [[ $package_src_file == *".tar.xz" ]] \
-   || [[ $package_src_file == *".tgz" ]] \
-   || [[ $package_src_file == *".tar.bz2" ]]; then
+  [ ! -d $package ]
   # 假定：解压缩结果的顶级目录名和包名一致。
-  tar xf $package_src_file_cache
-else
-  echo 不支持的文件类型
-  exit 1
-fi
+  # https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
+  if [[ $package_src_file == *".tar.gz" ]] \
+     || [[ $package_src_file == *".tar.xz" ]] \
+     || [[ $package_src_file == *".tgz" ]] \
+     || [[ $package_src_file == *".tar.bz2" ]]; then
+    tar xf $package_src_file_cache
+  elif [[ $package_src_file == *".zip" ]] ; then
+    unzip -q $package_src_file_cache
+  elif [[ $package_src_file == *".7z" ]] ; then
+    7z x -y $package_src_file_cache
+  else
+    echo 不支持的文件类型
+    exit 1
+  fi
 
-if [ $O_Patch == yes ] ; then
-  jgb_pushd .
-  cd $package
-  for pf in $(ls $JGB_BUILD_CONFIG_DIR/$package/*.patch 2>/dev/null);
-  do
-    patch -p1 < $pf
-  done
-  jgb_popd >/dev/null
+  if [ $O_Patch == yes ] ; then
+    jgb_pushd .
+    cd $package
+    for pf in $(ls $JGB_BUILD_CONFIG_DIR/$package/*.patch 2>/dev/null);
+    do
+      patch -p1 < $pf
+    done
+    jgb_popd >/dev/null
+  else
+    echo "已跳过应用补丁"
+  fi
+}
+
+process_git_src()
+{
+  [ ! -d $package ]
+  git clone $package_src
+}
+
+if [[ $package_src == *".zip" ]] \
+ || [[ $package_src == *".tar.gz" ]] \
+ || [[ $package_src == *".tar.xz" ]] \
+ || [[ $package_src == *".tgz" ]] \
+ || [[ $package_src == *".tar.bz2" ]] \
+ || [[ $package_src == *".7z" ]] \
+ ; then
+  process_zip_src
+elif [[ $package_src == *".git" ]] ; then
+  process_git_src
 else
-  echo "已跳过应用补丁"
+  echo "不支持的源包类型: $package_src"
+  exit 1
 fi
 
 echo 完成
