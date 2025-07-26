@@ -87,6 +87,8 @@ help()
     exit 1
 } >&2
 
+stat_time_start=$(date +%s.%N)
+
 goto_top_dir
 JGB_BUILD_TOP_DIR=$PWD
 package_name=$(basename $PWD)
@@ -302,5 +304,12 @@ if [ "$JGB_BUILD_PACK" == yes ] ; then
   tar -czf ${output_dir}/${package_file_name} -C $destdir/$JGB_BUILD_DESTDIR/.. .
   ln -sf ${package_file_name} ${output_dir}/${package_file_name_short}
   rm $destdir -rf
-  echo "打包完成: $package_file_name"
+  echo "打包完成: $output_dir/$package_file_name"
 fi
+
+stat_time_end=$(date +%s.%N)
+# scale 只对除法有效？
+stat_time_used=$(echo "scale=1;($stat_time_end-$stat_time_start)/1" | bc)
+# bc 将 0.1 显示为 .1
+stat_time_used=$(echo $stat_time_used | sed 's/^\./0./')
+echo "用时 $stat_time_used 秒"
