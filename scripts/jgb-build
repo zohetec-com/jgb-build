@@ -189,6 +189,8 @@ if [ "$JGB_BUILD_PACK" == yes ] ; then
   mkdir -p $output_dir
   destdir="$PWD/$(mktemp -d jgb-build.XXXXXX)"
   export DESTDIR=$destdir
+  # export DESTDIR 对 openssl-3.0.16 不起作用。
+  JGB_BUILD_MAKE_INSTALL_OPTIONS+=" DESTDIR=$destdir"
 fi
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/local/include"
