@@ -60,8 +60,8 @@ process_zip_src()
   if [ -n "$package_chksum" ] ; then
     package_chksum_file=$(basename $package_chksum)
     package_chksum_file_cache=$JGB_BUILD_CACHE_DIR/$package_chksum_file
-  else
-    echo "$JGB_BUILD_PACKAGES_FILE 文件中未指定 jgb_src_chksum[$package]"
+#  else
+#    echo "$JGB_BUILD_PACKAGES_FILE 文件中未指定 jgb_src_chksum[$package]"
   fi >&2
 
   package_src_file=$(basename $package_src)
@@ -135,4 +135,5 @@ else
   exit 1
 fi
 
+echo 获取源码：$package
 echo 完成
