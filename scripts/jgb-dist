@@ -27,10 +27,10 @@ for m in Debug Release
 do
     if [ -n "$pk" ] ; then
       jgb-src -R $pk
-      pushd $pk > /dev/null
+      jgb_pushd $pk
     fi
     jgb-build -Ri -p${jgb_arch} -t${m} -P $extra
     if [ -n "$pk" ] ; then
-      popd > /dev/null
+      jgb_popd
     fi
 done
