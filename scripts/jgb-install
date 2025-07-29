@@ -26,5 +26,6 @@ do
     fi
     echo "extract: $pk"
     dest_dir=${JGB_BUILD_DIR}/$m/$jgb_arch
+    mkdir -p $dest_dir
     tar -C $dest_dir -xf $pk_file_path
 done
