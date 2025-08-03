@@ -30,12 +30,13 @@ while getopts  "hPR" opt; do
   esac
 done
 
-if [ ! -f $JGB_BUILD_PACKAGES_FILE ] ; then
-  echo "文件 $JGB_BUILD_PACKAGES_FILE 不存在"
-  exit 1
-fi >&2
+if [ -f $JGB_BUILD_UPSTREAM_FILE ] ; then
+  . $JGB_BUILD_UPSTREAM_FILE
+fi
 
-. $JGB_BUILD_PACKAGES_FILE
+if [ -f $JGB_BUILD_UPSTREAM_FILE.local ] ; then
+  . $JGB_BUILD_UPSTREAM_FILE.local
+fi
 
 # https://stackoverflow.com/questions/9472871/parse-arguments-after-getopts
 shift $((OPTIND - 1))
@@ -47,14 +48,14 @@ if [ -d $package ] ; then
   if [ "$O_Remove" == yes ] ; then
     rm -rf $package
   else
-    echo "包 $package 已存在"
+    echo "$package 目录已存在"
     exit 1
   fi
 fi
 
 package_src=${jgb_src[$package]}
 if [ -z "$package_src" ] ; then
-  echo "$JGB_BUILD_PACKAGES_FILE 文件中未指定 jgb_src[$package]"
+  echo "not found: $package"
   exit 1
 fi >&2
 
@@ -65,7 +66,7 @@ process_zip_src()
     package_chksum_file=$(basename $package_chksum)
     package_chksum_file_cache=$JGB_BUILD_CACHE_DIR/$package_chksum_file
 #  else
-#    echo "$JGB_BUILD_PACKAGES_FILE 文件中未指定 jgb_src_chksum[$package]"
+#    echo "$JGB_BUILD_UPSTREAM_FILE 文件中未指定 jgb_src_chksum[$package]"
   fi >&2
 
   package_src_file=$(basename $package_src)
