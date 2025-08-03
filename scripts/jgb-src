@@ -127,9 +127,9 @@ process_git_src()
     #git fetch --tags
     #TODO：如果存在同名的 branch 和 tag，该如何处理？
     if git branch | grep -q $variant ; then
-      git checkout $variant
+      git checkout $variant 2>/dev/null
     elif git tag | grep -q $variant ; then
-      git checkout $variant
+      git checkout $variant 2>/dev/null
     else
       echo "not found: $variant"
     fi
