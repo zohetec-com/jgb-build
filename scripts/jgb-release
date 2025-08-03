@@ -32,7 +32,7 @@ jgb_release=$(jq -r .release $jgb_list_file)
 jgb_version=$(jq -r .version $jgb_list_file)
 jgb_exclude=$(jq -r .exclude $jgb_list_file)
 
-if [ -n "$jgb_exclude" ] ; then
+if [ $jgb_exclude != null ] ; then
   [ -r $jgb_exclude ]
   tar_opt_extra="-X $jgb_exclude"
 fi
@@ -80,7 +80,7 @@ do
   mv $chksum_file $m/sha256sum.txt
   # https://phoenixnap.com/kb/bash-heredoc
   cat << EOF > $m/release.json
-  {"release":"$jgb_release","version":"$jgb_version","date":"$(date)"}
+  {"release":"$jgb_release","version":"$jgb_version","date":"$(date)","config":"$m"}
 EOF
   re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${jgb_arch}.tar.gz
   re_file_short=${jgb_release}_${jgb_arch}.tar.gz
