@@ -4,13 +4,18 @@ set -e
 . jgb-helper
 jgb_arch=$(uname -p)
 
-while getopts  "bBp:" opt; do
+help()
+{
+    echo "[Usage] jgb-dist [-h] [-p <aarch64|x86_64>] <package>"
+    echo "-h display this help text, then exit"
+    echo "-p 选择目标架构"
+    exit 1
+} >&2
+
+while getopts  "hp:" opt; do
   case ${opt} in
-    b)
-      extra="-b"
-      ;;
-    B)
-      extra="-B"
+    h)
+      help
       ;;
     p)
       jgb_arch=$OPTARG
@@ -21,16 +26,19 @@ while getopts  "bBp:" opt; do
 done
 
 shift $((OPTIND - 1))
-pk=$1
+pk_full_name=$1
+pk=$(echo $pk_full_name | cut -d@ -f1)
+variant=$(echo $pk_full_name | cut -d@ -f2 -s)
+[ -n "$variant" ] && extra_opt="-V $variant"
+
+if [ -z "$pk" ] ; then
+    help
+fi >&2
 
 for m in Debug Release
 do
-    if [ -n "$pk" ] ; then
-      jgb-src -R $pk
-      jgb_pushd $pk
-    fi
-    jgb-build -Ri -p${jgb_arch} -t${m} -P $extra
-    if [ -n "$pk" ] ; then
-      jgb_popd
-    fi
+    jgb-src -R $pk_full_name
+    jgb_pushd $pk
+    jgb-build -Ri -p${jgb_arch} -t${m} -P $extra_opt
+    jgb_popd
 done

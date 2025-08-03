@@ -33,7 +33,7 @@ JGB_BUILD_SAVED="\
   JGB_BUILD_VERBOSE \
   JGB_BUILD_INSTALL \
   JGB_BUILD_RELATIVE_PATH"
-JGB_BUILD_OPTIONS="bBchiPp:rRst:vw"
+JGB_BUILD_OPTIONS="chiPp:rRst:V:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
@@ -73,15 +73,17 @@ save_set()
 
 help()
 {
-    echo "[Usage] jgb-build [-chirRsvw] [-p <aarch64>] [-t <Release|Debug>]"
+    echo "[Usage] jgb-build [-chirRsVvw] [-p <aarch64>] [-t <Release|Debug>]"
     echo "-c 启用代码覆盖编译选项"
-    echo "-h 打印帮助信息"
+    echo "-h display this help text, then exit"
     echo "-i 执行安装"
     echo "-r 启用源文件相对路径编译选项"
     echo "-p 选择目标架构"
     echo "-R 先作清除，再重新构建"
     echo "-s 启用 sanitize"
     echo "-t 选择构建类型"
+    echo "-P 执行打包"
+    echo "-V 为打包结果文件添加指定的变体名称"
     echo "-v 启用 VERBOSE"
     echo "-w 启用编译警告选项"
     exit 1
@@ -123,12 +125,6 @@ fi
 unset OPTIND
 while getopts $JGB_BUILD_OPTIONS opt; do
   case ${opt} in
-    b)
-      JGB_BUILD_INDICATE_VARIANT=branch
-      ;;
-    B)
-      JGB_BUILD_INDICATE_VARIANT=tag
-      ;;
     c)
       JGB_BUILD_COVERAGE=yes
       ;;
@@ -153,6 +149,9 @@ while getopts $JGB_BUILD_OPTIONS opt; do
     t)
       JGB_BUILD_TYPE=${OPTARG}
       ;;
+    V)
+      variant_name=${OPTARG}
+      ;;
     v)
       JGB_BUILD_VERBOSE=yes
       ;;
@@ -175,20 +174,14 @@ fi
 
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
 if [ "$JGB_BUILD_PACK" == yes ] ; then
-  output_dir=${JGB_BUILD_DIR}/package/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
-  if [ "$JGB_BUILD_INDICATE_VARIANT" == "branch" ] ; then
-    var_name=$(git rev-parse --abbrev-ref HEAD)
-  elif [ "$JGB_BUILD_INDICATE_VARIANT" == "tag" ] ; then
-    var_name=$(git describe --tags --abbrev=0)
+  output_dir=${JGB_BUILD_DIR}/packages/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
+  if [ -n "$variant_name" ] ; then
+    x_variant="_${variant_name}"
   fi
-  if [ -n "$var_name" ] ; then
-    x_var="_${var_name}"
-  fi
-  package_file_name=${package_name}${x_var}-$(date +%Y%m%d).tar.gz
-  package_file_name_short=${package_name}${x_var}.tar.gz
+  package_file_name=${package_name}${x_variant}-$(date +%Y%m%d).tar.gz
+  package_file_name_short=${package_name}${x_variant}.tar.gz
   mkdir -p $output_dir
   ref_file=$(mktemp $PWD/jgb-build.pack.XXXX)
-  #touch $ref_file
   sleep 1
 fi
 
