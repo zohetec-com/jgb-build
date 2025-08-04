@@ -2,6 +2,6 @@
 set -e
 . jgb-helper
 jgb-build
-PATH=$HOME/jgb-build.dir/Release/$(uname -p)/usr/bin:$HOME/jgb-build.dir/Release/$(uname -p)/usr/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
-export LD_LIBRARY_PATH=$JGB_BUILD_DIR/Release/$(uname -p)/usr/lib
+PATH=$HOME/jgb-build.dir/Release/$(uname -p)/bin:$HOME/jgb-build.dir/Release/$(uname -p)/sbin:/local/sbin:/local/bin:/sbin:/bin
+export LD_LIBRARY_PATH=$JGB_BUILD_DIR/Release/$(uname -p)/lib
 $@
