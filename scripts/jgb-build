@@ -71,6 +71,37 @@ save_set()
     done
 }
 
+clean()
+{
+    f=$1
+    jgb_pushd $JGB_BUILD_DESTDIR
+    if [ -f $f ] ; then
+       while read line; do
+          if [ -d $line ] ; then
+            rm -dv $line || true
+          else
+            rm -v $line || true
+          fi 2> /dev/null
+       done < $f
+    fi
+    jgb_popd
+}
+
+# 检查是否存在比参考文件更新的文件。
+# 如果存在，可能是系统时间异常，或者文件时间戳异常，总之 find 结果不可用。
+check_file_timestamp()
+{
+    jgb_pushd $JGB_BUILD_DESTDIR
+    local found=$(find . -newercc $ref_file -print -quit)
+    if [ -n "$found" ] ; then
+      JGB_BUILD_PACK=no
+      JGB_BUILD_INSTALL=no
+      rm $ref_file
+      echo "警告：检测到文件时间戳异常。打包功能不可用。"
+    fi
+    jgb_popd
+}
+
 help()
 {
     echo "[Usage] jgb-build [-chirRsVvw] [-p <aarch64>] [-t <Release|Debug>]"
@@ -151,6 +182,7 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       ;;
     V)
       variant_name=${OPTARG}
+      x_variant="_${variant_name}"
       ;;
     v)
       JGB_BUILD_VERBOSE=yes
@@ -173,16 +205,24 @@ if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
 fi
 
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
+
+if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
+  ref_file=$(mktemp $PWD/jgb-build.pack.XXXX)
+  sleep 1
+  check_file_timestamp
+fi
+
+if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
+  install_file=${package_name}${x_variant}.install
+  # 清除已安装的文件和目录，以确保重新安装全部文件和目录，确保打包结果完整。
+  clean $install_file
+fi
+
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   output_dir=${JGB_BUILD_DIR}/packages/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
-  if [ -n "$variant_name" ] ; then
-    x_variant="_${variant_name}"
-  fi
   package_file_name=${package_name}${x_variant}-$(date +%Y%m%d).tar.gz
   package_file_name_short=${package_name}${x_variant}.tar.gz
   mkdir -p $output_dir
-  ref_file=$(mktemp $PWD/jgb-build.pack.XXXX)
-  sleep 1
 fi
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/local/include"
@@ -293,15 +333,21 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
     make install DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
 fi
+
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   [ -f ${output_dir}/${package_file_name} ] && rm -f ${output_dir}/${package_file_name}
   jgb_pushd $JGB_BUILD_DESTDIR
-  #find . -newer $ref_file
   find . -newercc $ref_file -print0 | tar --null -czf ${output_dir}/${package_file_name} --no-recursion --files-from=-
   jgb_popd
   ln -sf ${package_file_name} ${output_dir}/${package_file_name_short}
+  echo "打包完成: $output_dir/$package_file_name" "  [ $package_file_name ]"
+fi
+
+if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
+  jgb_pushd $JGB_BUILD_DESTDIR
+  find . -newercc $ref_file ! -name $install_file > $install_file
   rm $ref_file
-  echo "打包完成: $output_dir/$package_file_name"
+  jgb_popd
 fi
 
 stat_time_end=$(date +%s.%N)
