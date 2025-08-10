@@ -5,12 +5,125 @@ set -e
 
 help()
 {
-    echo "[Usage] jgb-release [-f FILE] [-p <aarch64|x86_64>]"
+    echo "[Usage] jgb-release [-f FILE] [ -p ARCH]"
     echo "-f FILE 指定组装清单文件"
     echo "-h display this help text, then exit"
-    echo "-p 选择目标架构"
+    echo "-p ARCH 选择目标架构"
     exit 1
 } >&2
+
+install_packages()
+{
+    local arch=$1
+    local m=$2
+
+    [ -n "$arch" ]
+    [ -n "$m" ]
+
+    rm $m -rf
+    mkdir -p $m
+
+    for pk_full_name in $jgb_packages ;
+    do
+      [ $pk_full_name != null ]
+      pk=$(echo $pk_full_name | cut -d@ -f1)
+      variant=$(echo $pk_full_name | cut -d@ -f2 -s)
+      x_variant=
+      if [ -n "$variant" ] ; then
+        x_variant="_${variant}"
+      fi
+      pk_file=${pk}${x_variant}.tar.gz
+      pk_file_path=${JGB_BUILD_DIR}/packages/$m/$arch/$pk/$pk_file
+      if [ ! -f $pk_file_path ] ; then
+        echo "not found: $pk [ $pk_file_path ]"
+        exit 1
+      fi
+      echo "extract: $pk_full_name"
+      tar -C $m -xf $pk_file_path $jgb_tar_opt
+    done
+    chksum_file=$(mktemp /tmp/jgb-release.XXXX)
+    cd $m
+    find . -type f  -exec sha256sum {} \; > $chksum_file
+    cd ..
+    mv $chksum_file $m/sha256sum.txt
+    # https://phoenixnap.com/kb/bash-heredoc
+    cat << EOF > $m/release.json
+    {"release":"$jgb_release","version":"$jgb_version","date":"$(date)","config":"$m"}
+EOF
+}
+
+create_tar()
+{
+    local arch=$1
+    local compress=$2
+    [ -n "$arch" ]
+    [ -n "$compress" ]
+    if [ $compress == gzip ] ; then
+      suffix=gz
+    elif [ $compress == bzip2 ] ; then
+      suffix=bz2
+    else
+      echo "unknown compress type: $compress"
+      exit 1
+    fi
+    local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${arch}.tar.${suffix}
+    local re_file_short=${jgb_release}_${arch}.tar.${suffix}
+    local re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$arch
+    local re_file_path=$re_dir/$re_file
+    local re_file_short_path=$re_dir/$re_file_short
+    mkdir -p $re_dir
+    tar -C $m -caf $re_file_path .
+    ln -sf $re_file $re_file_short_path
+    echo created: $re_file_path
+}
+
+create_7z()
+{
+    local arch=$1
+    [ -n "$arch" ]
+    local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${arch}.7z
+    local re_file_short=${jgb_release}_${arch}.7z
+    local re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$arch
+    local re_file_path=$re_dir/$re_file
+    local re_file_short_path=$re_dir/$re_file_short
+    [ -f $re_file_path ] && rm $re_file_path
+    mkdir -p $re_dir
+    jgb_pushd $m
+    7z a $re_file_path
+    ln -sf $re_file $re_file_short_path
+    echo created: $re_file_path
+    jgb_popd
+}
+
+# https://www.iodigital.com/en/history/intracto/creating-debianubuntu-deb-packages
+create_deb()
+{
+    local arch=$1
+    [ -n "$arch" ]
+    # dpkg-architecture -L
+    if [ "$arch" == x86_64 ] ; then
+      deb_arch=amd64
+    elif [ "$arch" == aarch64 ] ; then
+      deb_arch=arm64
+    fi
+    local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${deb_arch}.deb
+    local re_file_short=${jgb_release}_${deb_arch}.deb
+    local re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$arch
+    local re_file_path=$re_dir/$re_file
+    local re_file_short_path=$re_dir/$re_file_short
+    local control_file=DEBIAN/control
+    mkdir -p $re_dir
+    jgb_pushd $m
+    [ -f $control_file ]
+    sed -i -e "s/JGB_RELEASE_ARCH/$deb_arch/g" \
+        -e "s/JGB_RELEASE/$jgb_release/g" \
+        -e "s/JGB_VERSION/$jgb_version/g" \
+        $control_file
+    dpkg-deb --build . $re_file_path
+    ln -sf $re_file $re_file_short_path
+    echo created: $re_file_path
+    jgb_popd
+}
 
 while getopts f:hp: opt; do
   case ${opt} in
@@ -21,7 +134,7 @@ while getopts f:hp: opt; do
       help
       ;;
     p)
-      jgb_arch=$OPTARG
+      jgb_archs+=" $OPTARG"
       ;;
     ?)
       ;;
@@ -30,65 +143,33 @@ done
 
 jgb_release=$(jq -r .release $jgb_list_file)
 jgb_version=$(jq -r .version $jgb_list_file)
+jgb_packages=$(jq -r .packages[] $jgb_list_file)
+if [ -z "$jgb_archs" ] ; then
+  jgb_archs=$(jq -r .architectures[] $jgb_list_file)
+fi
+jgb_pack=$(jq -c .pack[] $jgb_list_file)
 jgb_exclude=$(jq -r .exclude $jgb_list_file)
-
 if [ $jgb_exclude != null ] ; then
   [ -r $jgb_exclude ]
-  tar_opt_extra="-X $jgb_exclude"
-fi
-
-if [ -z "$jgb_arch" ] ; then
-  jgb_arch=$(uname -p)
-fi
-
-if [ "$jgb_arch" == arm64 ] ; then
-  jgb_arch=aarch64
+  jgb_tar_opt="-X $jgb_exclude"
 fi
 
 for m in Debug Release
 do
-  rm $m -rf
-  mkdir -p $m
-  x=0
-  while true;
+  for arch in $jgb_archs;
   do
-    pk_full_name=$(jq -r .packages[$x] $jgb_list_file)
-    if [ $pk_full_name != null ] ; then
-        pk=$(echo $pk_full_name | cut -d@ -f1)
-        variant=$(echo $pk_full_name | cut -d@ -f2 -s)
-        x_variant=
-        if [ -n "$variant" ] ; then
-          x_variant="_${variant}"
-        fi
-        pk_file=${pk}${x_variant}.tar.gz
-        pk_file_path=${JGB_BUILD_DIR}/packages/$m/$jgb_arch/$pk/$pk_file
-        if [ ! -f $pk_file_path ] ; then
-          echo "not found: $pk"
-          exit 1
-        fi
-        echo "extract: $pk_full_name"
-        tar -C $m -xf $pk_file_path $tar_opt_extra
-        ((++x))
-    else
-        break
-    fi
+    install_packages $arch $m
+    for pack in $jgb_pack;
+    do
+      type=$(echo $pack | jq -r .type)
+      if [ $type == tar ] ; then
+        compress=$(echo $pack | jq -r .compress)
+        create_tar $arch $compress
+      elif [ $type == 7z ] ; then
+        create_7z $arch
+      elif [ $type == deb ] ; then
+        create_deb $arch
+      fi
+    done
   done
-  chksum_file=$(mktemp /tmp/jgb-release.XXXX)
-  cd $m
-  find . -type f  -exec sha256sum {} \; > $chksum_file
-  cd ..
-  mv $chksum_file $m/sha256sum.txt
-  # https://phoenixnap.com/kb/bash-heredoc
-  cat << EOF > $m/release.json
-  {"release":"$jgb_release","version":"$jgb_version","date":"$(date)","config":"$m"}
-EOF
-  re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${jgb_arch}.tar.gz
-  re_file_short=${jgb_release}_${jgb_arch}.tar.gz
-  re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$jgb_arch
-  re_file_path=$re_dir/$re_file
-  re_file_short_path=$re_dir/$re_file_short
-  mkdir -p $re_dir
-  tar -C $m -czf $re_file_path .
-  ln -sf $re_file $re_file_short_path
-  echo created: $re_file_path
 done
