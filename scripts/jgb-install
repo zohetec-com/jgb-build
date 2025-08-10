@@ -6,10 +6,10 @@ jgb_arch=$(uname -p)
 
 help()
 {
-    echo "[Usage] jgb-install [-f FILE] [-h] [-p <aarch64|x86_64>] <package>"
+    echo "[Usage] jgb-install [-f FILE] [-h] [-p ARCH] <package>"
     echo "-f FILE 指定包含包列表的 JSON 文件"
     echo "-h display this help text, then exit"
-    echo "-p 选择目标架构"
+    echo "-p ARCH 选择目标架构"
     exit 1
 } >&2
 

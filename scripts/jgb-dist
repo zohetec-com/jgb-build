@@ -6,9 +6,9 @@ jgb_arch=$(uname -p)
 
 help()
 {
-    echo "[Usage] jgb-dist [-h] [-p <aarch64|x86_64>] <package>"
+    echo "[Usage] jgb-dist [-h] [-p ARCH] <package>"
     echo "-h display this help text, then exit"
-    echo "-p 选择目标架构"
+    echo "-p ARCH 选择目标架构"
     exit 1
 } >&2
 

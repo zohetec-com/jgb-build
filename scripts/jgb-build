@@ -104,12 +104,12 @@ check_file_timestamp()
 
 help()
 {
-    echo "[Usage] jgb-build [-chirRsVvw] [-p <aarch64>] [-t <Release|Debug>]"
+    echo "[Usage] jgb-build [-chirRsVvw] [-p ARCH] [-t <Release|Debug>]"
     echo "-c 启用代码覆盖编译选项"
     echo "-h display this help text, then exit"
     echo "-i 执行安装"
     echo "-r 启用源文件相对路径编译选项"
-    echo "-p 选择目标架构"
+    echo "-p ARCH 选择目标架构"
     echo "-R 先作清除，再重新构建"
     echo "-s 启用 sanitize"
     echo "-t 选择构建类型"
