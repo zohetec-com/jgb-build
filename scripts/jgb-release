@@ -68,7 +68,7 @@ create_tar()
     fi
     local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${arch}.tar.${suffix}
     local re_file_short=${jgb_release}_${arch}.tar.${suffix}
-    local re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$arch
+    local re_dir=${JGB_BUILD_DIR}/releases/${jgb_release}/$m/$arch
     local re_file_path=$re_dir/$re_file
     local re_file_short_path=$re_dir/$re_file_short
     mkdir -p $re_dir
@@ -83,7 +83,7 @@ create_7z()
     [ -n "$arch" ]
     local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${arch}.7z
     local re_file_short=${jgb_release}_${arch}.7z
-    local re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$arch
+    local re_dir=${JGB_BUILD_DIR}/releases/${jgb_release}/$m/$arch
     local re_file_path=$re_dir/$re_file
     local re_file_short_path=$re_dir/$re_file_short
     [ -f $re_file_path ] && rm $re_file_path
@@ -108,7 +108,7 @@ create_deb()
     fi
     local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${deb_arch}.deb
     local re_file_short=${jgb_release}_${deb_arch}.deb
-    local re_dir=${JGB_BUILD_DIR}/release/${jgb_release}/$m/$arch
+    local re_dir=${JGB_BUILD_DIR}/releases/${jgb_release}/$m/$arch
     local re_file_path=$re_dir/$re_file
     local re_file_short_path=$re_dir/$re_file_short
     local control_file=DEBIAN/control
