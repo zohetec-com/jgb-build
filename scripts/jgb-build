@@ -207,12 +207,13 @@ fi
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
 
 if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
-  ref_file=$(mktemp $PWD/jgb-build.pack.XXXX)
+  mkdir -p $JGB_BUILD_DESTDIR
+  # 不可同时运行多个 jgb-build 脚本执行安装，否则打包结果混淆。
+  jgb_wait_lock
+  # 创建参考时间戳文件
+  ref_file=$(mktemp $PWD/$JGB_BUILD_BUILD_DIR/jgb-build.pack.XXXX)
   sleep 1
   check_file_timestamp
-fi
-
-if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   install_file=${package_name}${x_variant}.install
   # 清除已安装的文件和目录，以确保重新安装全部文件和目录，确保打包结果完整。
   clean $install_file

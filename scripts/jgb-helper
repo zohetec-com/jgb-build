@@ -60,6 +60,37 @@ jgb_popd()
   popd > /dev/null
 }
 
+jgb_acquire_lock()
+{
+    if mkdir "$JGB_BUILD_LOCK_DIR" 2>/dev/null; then
+        echo "Lock acquired."
+        jgb_owned_lock=yes
+    fi
+}
+
+jgb_release_lock()
+{
+    if [ "$jgb_owned_lock" == yes ] ; then
+        rmdir "$JGB_BUILD_LOCK_DIR"
+        echo "Lock released."
+    fi
+}
+
+jgb_wait_lock()
+{
+    while true ; do
+        jgb_acquire_lock
+        if [ "$jgb_owned_lock" == yes ] ; then
+            return 0
+        else
+            echo "Waiting for lock..."
+            sleep 1
+        fi
+    done
+}
+
+trap jgb_release_lock EXIT
+
 if [ -v JGB_BUILD_DEBUG ] ; then
   set -x
 fi
@@ -72,3 +103,4 @@ JGB_BUILD_CONFIG_DIR=$JGB_BUILD_DIR/conf.dir
 JGB_BUILD_UPSTREAM_FILE=$JGB_BUILD_CONFIG_DIR/upstream
 # 缓存下载文件目录
 JGB_BUILD_CACHE_DIR=$JGB_BUILD_DIR/cache.dir
+JGB_BUILD_LOCK_DIR=$JGB_BUILD_DIR/lock.dir
