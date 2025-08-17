@@ -172,6 +172,11 @@ while getopts $JGB_BUILD_OPTIONS opt; do
     h)
       help
       ;;
+    P)
+      JGB_BUILD_REBULD=yes
+      JGB_BUILD_PACK=yes
+      JGB_BUILD_INSTALL=yes
+      ;;
     R)
       JGB_BUILD_REBULD=yes
       ;;
@@ -202,10 +207,6 @@ while getopts $JGB_BUILD_OPTIONS opt; do
     h)
       ;;
     i)
-      JGB_BUILD_INSTALL=yes
-      ;;
-    P)
-      JGB_BUILD_PACK=yes
       JGB_BUILD_INSTALL=yes
       ;;
     p)
