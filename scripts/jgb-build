@@ -87,7 +87,7 @@ clean()
     jgb_popd
 }
 
-# 检查是否存在比参考文件更新的文件。
+# 检查是否存在比参考文件还新的文件。
 # 如果存在，可能是系统时间异常，或者文件时间戳异常，总之 find 结果不可用。
 check_file_timestamp()
 {
@@ -101,6 +101,46 @@ check_file_timestamp()
     fi
     jgb_popd
 }
+
+acquire_lock()
+{
+    if mkdir "$install_lock_dir" 2>/dev/null; then
+        echo "Lock acquired."
+        owned_lock=yes
+    fi
+}
+
+release_lock()
+{
+    if [ "$owned_lock" == yes ] ; then
+        rmdir "$install_lock_dir"
+        echo "Lock released."
+    fi
+}
+
+wait_lock()
+{
+    while true ; do
+        acquire_lock
+        if [ "$owned_lock" == yes ] ; then
+            return 0
+        else
+            echo "Waiting for lock ..."
+            sleep 1
+        fi
+    done
+}
+
+pre_install()
+{
+    # 不可同时运行多个 jgb-build 脚本执行安装到同一目录，否则打包结果混淆。
+    install_lock_dir=$JGB_BUILD_DESTDIR/lock.dir
+    wait_lock
+    touch $ref_file
+    sleep 1
+}
+
+trap release_lock EXIT
 
 help()
 {
@@ -208,11 +248,9 @@ export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
 
 if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   mkdir -p $JGB_BUILD_DESTDIR
-  # 不可同时运行多个 jgb-build 脚本执行安装，否则打包结果混淆。
-  jgb_wait_lock
+
   # 创建参考时间戳文件
   ref_file=$(mktemp $PWD/$JGB_BUILD_BUILD_DIR/jgb-build.pack.XXXX)
-  sleep 1
   check_file_timestamp
   install_file=${package_name}${x_variant}.install
   # 清除已安装的文件和目录，以确保重新安装全部文件和目录，确保打包结果完整。
@@ -285,6 +323,7 @@ if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
   cmake -DCMAKE_INSTALL_PREFIX=$JGB_BUILD_DESTDIR $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
   cmake  --build $JGB_BUILD_BUILD_DIR
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
+    pre_install
     cmake --install $JGB_BUILD_BUILD_DIR
   fi
 elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
@@ -319,6 +358,7 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     ./configure --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_CONFIGURE_OPTIONS
     make $JGB_BUILD_MAKE_OPTIONS
     if [ "$JGB_BUILD_INSTALL" == yes ] ; then
+      pre_install
       make install $JGB_BUILD_MAKE_INSTALL_OPTIONS
     fi
   else
@@ -331,6 +371,7 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   fi
   make $JGB_BUILD_MAKE_OPTIONS
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
+    pre_install
     make install DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
 fi
