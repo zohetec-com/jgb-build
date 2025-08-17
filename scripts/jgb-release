@@ -20,8 +20,12 @@ install_packages()
     [ -n "$arch" ]
     [ -n "$m" ]
 
+    if [ "$jgb_destdir" != null ] ; then
+      jgb_destdir=$(echo -n $jgb_destdir | sed 's/^\/*//g')
+    fi
+
     rm $m -rf
-    mkdir -p $m
+    mkdir -p $m/$jgb_destdir
 
     for pk_full_name in $jgb_packages ;
     do
@@ -39,17 +43,17 @@ install_packages()
         exit 1
       fi
       echo "extract: $pk_full_name"
-      tar -C $m -xf $pk_file_path $jgb_tar_opt
+      tar -C $m/$jgb_destdir -xf $pk_file_path $jgb_tar_opt
     done
     chksum_file=$(mktemp /tmp/jgb-release.XXXX)
-    cd $m
+    jgb_pushd $m/$jgb_destdir
     find . -type f  -exec sha256sum {} \; > $chksum_file
-    cd ..
-    mv $chksum_file $m/sha256sum.txt
+    mv $chksum_file sha256sum.txt
     # https://phoenixnap.com/kb/bash-heredoc
-    cat << EOF > $m/release.json
-    {"release":"$jgb_release","version":"$jgb_version","date":"$(date)","config":"$m"}
+    cat << EOF > release.json
+    {"release":"$jgb_release","version":"$jgb_version","date":"$jgb_date","config":"$m"}
 EOF
+    jgb_popd
 }
 
 create_tar()
@@ -114,6 +118,11 @@ create_deb()
     local control_file=DEBIAN/control
     mkdir -p $re_dir
     jgb_pushd $m
+    # dpkg-deb 要求 DEBIAN 是目录，不能是软连接。
+    if [ -n "$jgb_destdir" ] ; then
+      [ -d $jgb_destdir/DEBIAN ]
+      /bin/cp -rv $jgb_destdir/DEBIAN .
+    fi
     [ -f $control_file ]
     sed -i -e "s/JGB_RELEASE_ARCH/$deb_arch/g" \
         -e "s/JGB_RELEASE/$jgb_release/g" \
@@ -122,6 +131,9 @@ create_deb()
     dpkg-deb --build . $re_file_path
     ln -sf $re_file $re_file_short_path
     echo created: $re_file_path
+    if [ -n "$jgb_destdir" ] ; then
+      rm -r DEBIAN
+    fi
     jgb_popd
 }
 
@@ -153,6 +165,8 @@ if [ $jgb_exclude != null ] ; then
   [ -r $jgb_exclude ]
   jgb_tar_opt="-X $jgb_exclude"
 fi
+jgb_destdir=$(jq -r .destdir $jgb_list_file)
+jgb_date=$(date)
 
 for m in Debug Release
 do
