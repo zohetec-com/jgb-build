@@ -1,0 +1,44 @@
+#!/bin/bash
+set -e
+
+. jgb-helper
+jgb_arch=$(uname -p)
+
+help()
+{
+    echo "[Usage] jgb-pack [-h] [-p ARCH] <package>"
+    echo "-h display this help text, then exit"
+    echo "-p ARCH 选择目标架构"
+    exit 1
+} >&2
+
+while getopts  "hp:" opt; do
+  case ${opt} in
+    h)
+      help
+      ;;
+    p)
+      jgb_arch=$OPTARG
+      ;;
+    ?)
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+pk_full_name=$1
+pk=$(echo $pk_full_name | cut -d@ -f1)
+variant=$(echo $pk_full_name | cut -d@ -f2 -s)
+[ -n "$variant" ] && extra_opt="-V $variant"
+
+if [ -z "$pk" ] ; then
+    help
+fi >&2
+
+for m in Debug Release;
+do
+    jgb-src -R $pk_full_name
+    jgb_pushd $pk
+    jgb-build -Ri -p${jgb_arch} -t${m} -P $extra_opt
+    jgb_popd
+done

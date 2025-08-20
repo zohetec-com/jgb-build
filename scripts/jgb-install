@@ -39,7 +39,7 @@ install_package()
       x_variant="_${variant}"
     fi
     local pk_file=${pk}${x_variant}.tar.gz
-    for m in Debug Release
+    for m in Debug Release ;
     do
         pk_file_path=${JGB_BUILD_DIR}/packages/$m/$jgb_arch/$pk/$pk_file
         if [ ! -f $pk_file_path ] ; then

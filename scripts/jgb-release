@@ -14,8 +14,8 @@ help()
 
 install_packages()
 {
-    local arch=$1
-    local m=$2
+    local m=$1
+    local arch=$2
 
     [ -n "$arch" ]
     [ -n "$m" ]
@@ -37,12 +37,18 @@ install_packages()
         x_variant="_${variant}"
       fi
       pk_file=${pk}${x_variant}.tar.gz
-      pk_file_path=${JGB_BUILD_DIR}/packages/$m/$arch/$pk/$pk_file
+      # 优先使用本地发布的版本。
+      pk_file_path=${JGB_BUILD_DIR}/local/packages/$m/$arch/$pk/$pk_file
+      if [ -f $pk_file_path ] ; then
+        notify_msg="[local]"
+      else
+        pk_file_path=${JGB_BUILD_DIR}/dist/packages/$m/$arch/$pk/$pk_file
+      fi
       if [ ! -f $pk_file_path ] ; then
         echo "not found: $pk [ $pk_file_path ]"
         exit 1
       fi
-      echo "extract: $pk_full_name"
+      echo "extract: $pk_full_name $notify_msg"
       tar -C $m/$jgb_destdir -xf $pk_file_path $jgb_tar_opt
     done
     chksum_file=$(mktemp /tmp/jgb-release.XXXX)
@@ -58,10 +64,14 @@ EOF
 
 create_tar()
 {
-    local arch=$1
-    local compress=$2
+    local m=$1
+    local arch=$2
+    local compress=$3
+
+    [ -n "$m" ]
     [ -n "$arch" ]
     [ -n "$compress" ]
+
     if [ $compress == gzip ] ; then
       suffix=gz
     elif [ $compress == bzip2 ] ; then
@@ -70,9 +80,9 @@ create_tar()
       echo "unknown compress type: $compress"
       exit 1
     fi
-    local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${arch}.tar.${suffix}
+    local re_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.tar.${suffix}
     local re_file_short=${jgb_release}_${arch}.tar.${suffix}
-    local re_dir=${JGB_BUILD_DIR}/releases/${jgb_release}/$m/$arch
+    local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
     local re_file_path=$re_dir/$re_file
     local re_file_short_path=$re_dir/$re_file_short
     mkdir -p $re_dir
@@ -83,11 +93,15 @@ create_tar()
 
 create_7z()
 {
-    local arch=$1
+    local m=$1
+    local arch=$2
+
+    [ -n "$m" ]
     [ -n "$arch" ]
-    local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${arch}.7z
+
+    local re_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.7z
     local re_file_short=${jgb_release}_${arch}.7z
-    local re_dir=${JGB_BUILD_DIR}/releases/${jgb_release}/$m/$arch
+    local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
     local re_file_path=$re_dir/$re_file
     local re_file_short_path=$re_dir/$re_file_short
     [ -f $re_file_path ] && rm $re_file_path
@@ -102,17 +116,21 @@ create_7z()
 # https://www.iodigital.com/en/history/intracto/creating-debianubuntu-deb-packages
 create_deb()
 {
-    local arch=$1
+    local m=$1
+    local arch=$2
+
+    [ -n "$m" ]
     [ -n "$arch" ]
+
     # dpkg-architecture -L
     if [ "$arch" == x86_64 ] ; then
       deb_arch=amd64
     elif [ "$arch" == aarch64 ] ; then
       deb_arch=arm64
     fi
-    local re_file=${jgb_release}_V${jgb_version}_$(date +%Y%m%d)_${deb_arch}.deb
-    local re_file_short=${jgb_release}_${deb_arch}.deb
-    local re_dir=${JGB_BUILD_DIR}/releases/${jgb_release}/$m/$arch
+    local re_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.deb
+    local re_file_short=${jgb_release}_${arch}.deb
+    local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
     local re_file_path=$re_dir/$re_file
     local re_file_short_path=$re_dir/$re_file_short
     local control_file=DEBIAN/control
@@ -167,22 +185,23 @@ if [ $jgb_exclude != null ] ; then
 fi
 jgb_destdir=$(jq -r .destdir $jgb_list_file)
 jgb_date=$(date)
+jgb_date_short=$(date +%Y%m%d)
 
-for m in Debug Release
+for m in Debug Release;
 do
   for arch in $jgb_archs;
   do
-    install_packages $arch $m
+    install_packages $m $arch
     for pack in $jgb_pack;
     do
       type=$(echo $pack | jq -r .type)
       if [ $type == tar ] ; then
         compress=$(echo $pack | jq -r .compress)
-        create_tar $arch $compress
+        create_tar $m $arch $compress
       elif [ $type == 7z ] ; then
-        create_7z $arch
+        create_7z $m $arch
       elif [ $type == deb ] ; then
-        create_deb $arch
+        create_deb $m $arch
       fi
     done
   done

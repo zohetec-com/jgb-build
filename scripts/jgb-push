@@ -1,0 +1,59 @@
+#!/bin/bash
+set -e
+
+. jgb-helper
+jgb_arch=$(uname -p)
+
+help()
+{
+    echo "[Usage] jgb-push [-h] [-p ARCH] <package>"
+    echo "-h display this help text, then exit"
+    echo "-p ARCH 选择目标架构"
+    exit 1
+} >&2
+
+while getopts  "d:hp:" opt; do
+  case ${opt} in
+    h)
+      help
+      ;;
+    d)
+      jgb_date=$OPTARG
+      ;;
+    p)
+      jgb_arch=$OPTARG
+      ;;
+    ?)
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+pk_full_name=$1
+pk=$(echo $pk_full_name | cut -d@ -f1)
+variant=$(echo $pk_full_name | cut -d@ -f2 -s)
+[ -n "$variant" ] && extra_opt="-V $variant"
+
+if [ -z "$pk" ] ; then
+    help
+fi >&2
+
+if [ -z "$jgb_date" ] ; then
+    jgb_date=$(date +%Y%m%d)
+fi
+
+for m in Debug Release;
+do
+    src_dir=${JGB_BUILD_DIR}/local/packages/$m/${jgb_arch}/${pk}
+    dst_dir=${JGB_BUILD_DIR}/dist/packages/$m/${jgb_arch}/${pk}
+    package_file_name=${pk}${x_variant}-$(date +%Y%m%d).tar.gz
+    src_file_path=$src_dir/$package_file_name
+    package_file_name_short=${pk}${x_variant}.tar.gz
+    mkdir -p $dst_dir
+    if [ ! -f $src_file_path ] ; then
+        echo "not found: $pk_full_name [$src_file_path]"
+        exit 1
+    fi
+    /bin/cp -v $src_file_path $dst_dir
+    ln -vsf $package_file_name $dst_dir/$package_file_name_short
+done
