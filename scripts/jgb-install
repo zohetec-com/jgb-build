@@ -41,12 +41,17 @@ install_package()
     local pk_file=${pk}${x_variant}.tar.gz
     for m in Debug Release ;
     do
-        pk_file_path=${JGB_BUILD_DIR}/packages/$m/$jgb_arch/$pk/$pk_file
+        pk_file_path=${JGB_BUILD_DIR}/local/packages/$m/$jgb_arch/$pk/$pk_file
+        if [ -f $pk_file_path ] ; then
+          notify_msg="[local]"
+        else
+          pk_file_path=${JGB_BUILD_DIR}/dist/packages/$m/$jgb_arch/$pk/$pk_file
+        fi
         if [ ! -f $pk_file_path ] ; then
-          echo "not found: $pk_full_name"
+          echo "not found: $pk [ $pk_file_path ]"
           exit 1
         fi
-        echo "extract: $pk_full_name"
+        echo "extract: $pk_full_name $notify_msg"
         local dest_dir=${JGB_BUILD_DIR}/$m/$jgb_arch
         mkdir -p $dest_dir
         tar -C $dest_dir -xf $pk_file_path
