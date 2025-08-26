@@ -20,7 +20,7 @@ install_packages()
     [ -n "$arch" ]
     [ -n "$m" ]
 
-    if [ "$jgb_destdir" != null ] ; then
+    if [ -n "$jgb_destdir" ] ; then
       jgb_destdir=$(echo -n $jgb_destdir | sed 's/^\/*//g')
     fi
 
@@ -184,6 +184,9 @@ if [ $jgb_exclude != null ] ; then
   jgb_tar_opt="-X $jgb_exclude"
 fi
 jgb_destdir=$(jq -r .destdir $jgb_list_file)
+if [ "$jgb_destdir" == null ] ; then
+  jgb_destdir=
+fi
 jgb_date=$(date)
 jgb_date_short=$(date +%Y%m%d)
 
