@@ -107,8 +107,7 @@ process_zip_src()
   fi
 
   if [ $O_Patch == yes ] ; then
-    jgb_pushd .
-    cd $package
+    jgb_pushd $package
     for pf in $(ls $JGB_BUILD_CONFIG_DIR/$package/*.patch 2>/dev/null);
     do
       patch -p1 < $pf
@@ -116,6 +115,10 @@ process_zip_src()
     jgb_popd >/dev/null
   else
     echo "已跳过应用补丁"
+  fi
+
+  if [ -x $JGB_BUILD_CONFIG_DIR/$package/local-build ] || [ -h $JGB_BUILD_CONFIG_DIR/$package/local-build ]; then
+    ln -vs $JGB_BUILD_CONFIG_DIR/$package/local-build $package
   fi
 }
 

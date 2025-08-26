@@ -39,6 +39,10 @@ goto_top_dir()
         echo "top directory: $PWD"
         JGB_BUILD_BACK_END="makefile"
         break
+      elif [ -h local-build ] ; then
+        echo "top directory: $PWD"
+        JGB_BUILD_BACK_END="adhoc"
+        break
       fi
 
       if [ "$PWD" != / ] ; then

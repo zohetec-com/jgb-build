@@ -245,6 +245,11 @@ if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
   JGB_BUILD_TARGET_ARCH="aarch64"
 fi
 
+if [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
+  # 简化处理：构建即安装。
+  JGB_BUILD_INSTALL=yes
+fi
+
 export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
 
 if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
@@ -375,6 +380,9 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
     pre_install
     make install DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
+elif [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
+  pre_install
+  . local-build
 fi
 
 if [ "$JGB_BUILD_PACK" == yes ] ; then
