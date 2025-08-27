@@ -3,6 +3,7 @@ set -e
 
 . jgb-helper
 jgb_arch=$(uname -p)
+jgb_pack_dir=$JGB_BUILD_DIR/pack.dir
 
 help()
 {
@@ -35,6 +36,11 @@ if [ -z "$pk" ] ; then
     help
 fi >&2
 
+[ -n "$JGB_BUILD_DIR" ]
+mkdir -p $jgb_pack_dir
+pack_tmp_dir=$(mktemp -d $jgb_pack_dir/$pk.XXXXXX)
+trap "rm $pack_tmp_dir -rf" EXIT
+cd $pack_tmp_dir
 for m in Debug Release;
 do
     jgb-src -R $pk_full_name
