@@ -173,7 +173,8 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       help
       ;;
     P)
-      JGB_BUILD_REBULD=yes
+      # 调试阶段，频繁修改小部分代码后打包测试，重新构建太费时。
+      #JGB_BUILD_REBULD=yes
       JGB_BUILD_PACK=yes
       JGB_BUILD_INSTALL=yes
       ;;
