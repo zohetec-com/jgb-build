@@ -281,7 +281,8 @@ fi
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
-export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib"
+# openssl-3.0.16 install to lib64
+export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib -L${JGB_BUILD_DESTDIR}/lib64"
 
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
   CFLAGS="$CFLAGS -DDEBUG -g -O0"
