@@ -33,7 +33,7 @@ JGB_BUILD_SAVED="\
   JGB_BUILD_VERBOSE \
   JGB_BUILD_INSTALL \
   JGB_BUILD_RELATIVE_PATH"
-JGB_BUILD_OPTIONS="chiPp:rRst:V:vw"
+JGB_BUILD_OPTIONS="chiLPp:rRst:V:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
@@ -144,17 +144,18 @@ trap release_lock EXIT
 
 help()
 {
-    echo "[Usage] jgb-build [-chirRsVvw] [-p ARCH] [-t <Release|Debug>]"
+    echo "[Usage] jgb-build [-chiLPrRsvw] [-p ARCH] [-t Release|Debug] [-V VAR]"
     echo "-c 启用代码覆盖编译选项"
     echo "-h display this help text, then exit"
     echo "-i 执行安装"
     echo "-r 启用源文件相对路径编译选项"
     echo "-p ARCH 选择目标架构"
-    echo "-R 先作清除，再重新构建"
-    echo "-s 启用 sanitize"
-    echo "-t 选择构建类型"
-    echo "-P 执行打包"
-    echo "-V 为打包结果文件添加指定的变体名称"
+    echo "-R 重新构建"
+    echo "-s 启用 sanitize 编译选项"
+    echo "-t Release|Debug 选择构建配置"
+    echo "-L 打包到 local 目录"
+    echo "-P 打包到 dist 目录"
+    echo "-V VAR 为打包结果文件添加指定的变种名称"
     echo "-v 启用 VERBOSE"
     echo "-w 启用编译警告选项"
     exit 1
@@ -172,11 +173,17 @@ while getopts $JGB_BUILD_OPTIONS opt; do
     h)
       help
       ;;
+    L)
+      JGB_BUILD_PACK=yes
+      JGB_BUILD_INSTALL=yes
+      pack_dir=local
+    ;;
     P)
       # 调试阶段，频繁修改小部分代码后打包测试，重新构建太费时。
       #JGB_BUILD_REBULD=yes
       JGB_BUILD_PACK=yes
       JGB_BUILD_INSTALL=yes
+      pack_dir=dist
       ;;
     R)
       JGB_BUILD_REBULD=yes
@@ -265,7 +272,8 @@ if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
 fi
 
 if [ "$JGB_BUILD_PACK" == yes ] ; then
-  output_dir=${JGB_BUILD_DIR}/local/packages/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
+  [ -n "$pack_dir" ]
+  output_dir=${JGB_BUILD_DIR}/$pack_dir/packages/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
   package_file_name=${package_name}${x_variant}-$(date +%Y%m%d).tar.gz
   package_file_name_short=${package_name}${x_variant}.tar.gz
   mkdir -p $output_dir
