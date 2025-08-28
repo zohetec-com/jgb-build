@@ -11,10 +11,11 @@ help()
     echo "-d DATE 指定包的日期，默认今天"
     echo "-h display this help text, then exit"
     echo "-p ARCH 选择目标架构"
+    echo "-r 在 dist 目录中恢复软链接指向指定日期的包"
     exit 1
 } >&2
 
-while getopts  "cd:hp:" opt; do
+while getopts  "cd:hp:r" opt; do
   case ${opt} in
     c)
       clean=yes
@@ -27,6 +28,9 @@ while getopts  "cd:hp:" opt; do
       ;;
     p)
       jgb_arch=$OPTARG
+      ;;
+    r)
+      revert=yes
       ;;
     ?)
       ;;
@@ -63,15 +67,23 @@ do
     dst_dir=${JGB_BUILD_DIR}/dist/packages/$m/${jgb_arch}/${pk}
     package_file_name=${pk}${x_variant}-$(date +%Y%m%d).tar.gz
     src_file_path=$src_dir/$package_file_name
+    dst_file_path=$dst_dir/$package_file_name
     package_file_name_short=${pk}${x_variant}.tar.gz
-    if [ ! -f $src_file_path ] ; then
-        echo "not found: $pk_full_name [$src_file_path]"
-        exit 1
-    fi
     if [ "$clean" == yes ] ; then
         rm -vf $src_file_path
         rm -vf $src_dir/$package_file_name_short
+    elif [ "$revert" == yes ] ; then
+        if [ -f $dst_file_path ] ; then
+            ln -vsf $package_file_name $dst_dir/$package_file_name_short
+        else
+            echo "not found: $pk_full_name [$dst_file_path]"
+            exit 1
+        fi
     else
+        if [ ! -f $src_file_path ] ; then
+            echo "not found: $pk_full_name [$src_file_path]"
+            exit 1
+        fi
         mkdir -p $dst_dir
         /bin/cp -v $src_file_path $dst_dir
         ln -vsf $package_file_name $dst_dir/$package_file_name_short
