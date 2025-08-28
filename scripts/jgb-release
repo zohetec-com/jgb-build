@@ -24,6 +24,7 @@ install_packages()
       jgb_destdir=$(echo -n $jgb_destdir | sed 's/^\/*//g')
     fi
 
+    echo remove $PWD/$m
     rm $m -rf
     mkdir -p $m/$jgb_destdir
 

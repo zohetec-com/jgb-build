@@ -46,6 +46,7 @@ variant=$(echo $pk_full_name | cut -d@ -f2 -s)
 
 if [ -d $package ] ; then
   if [ "$O_Remove" == yes ] ; then
+    echo remove $PWD/$package
     rm -rf $package
   else
     echo "$package 目录已存在"
