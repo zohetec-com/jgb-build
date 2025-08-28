@@ -271,9 +271,9 @@ if [ "$JGB_BUILD_PACK" == yes ] ; then
   mkdir -p $output_dir
 fi
 
-export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/local/include"
-export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/local/include"
-export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib -L${JGB_BUILD_DESTDIR}/local/lib"
+export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
+export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
+export LDFLAGS="-L${JGB_BUILD_DESTDIR}/lib"
 
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
   CFLAGS="$CFLAGS -DDEBUG -g -O0"
