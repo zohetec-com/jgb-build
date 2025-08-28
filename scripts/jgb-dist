@@ -3,8 +3,8 @@
 . jgb-helper
 
 jgb_date_short=$(date +%Y%m%d)
-jgb_archs="x86_64 aarch64"
 jgb_operation="copy"
+jgb_archs=""
 
 help()
 {
@@ -35,7 +35,7 @@ while getopts  "d:Df:hp:uUv:" opt; do
       help
       ;;
     p)
-      jgb_arch+=" $OPTARG"
+      jgb_archs+=" $OPTARG"
       ;;
     u)
       jgb_operation="copy"
@@ -59,6 +59,10 @@ if [ -n "$jgb_list_file" ] ; then
 
     [ $jgb_release != null ]
     [ $jgb_version != null ]
+
+    if [ -z "$jgb_archs" ] ; then
+      jgb_archs=$(jq -r .architectures[] $jgb_list_file)
+    fi
 else
     shift $((OPTIND - 1))
     jgb_release=$1
@@ -71,10 +75,9 @@ for m in Debug Release;
 do
   for arch in $jgb_archs;
   do
-
-    for suffix in gz bz2 7z deb;
+    for suffix in tar.gz tar.bz2 7z deb;
     do
-        src_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.tar.${suffix}
+        src_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.${suffix}
         src_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
         src_file_path=$src_dir/$src_file
         dst_dir=${JGB_BUILD_DIR}/dist/releases/${jgb_release}/$m
