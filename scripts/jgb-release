@@ -178,7 +178,7 @@ jgb_packages=$(jq -r .packages[] $jgb_list_file)
 if [ -z "$jgb_archs" ] ; then
   jgb_archs=$(jq -r .architectures[] $jgb_list_file)
 fi
-jgb_format=$(jq -c .format[] $jgb_list_file)
+jgb_formats=$(jq -c .format[] $jgb_list_file)
 jgb_exclude=$(jq -r .exclude $jgb_list_file)
 if [ $jgb_exclude != null ] ; then
   [ -r $jgb_exclude ]
@@ -196,7 +196,7 @@ do
   for arch in $jgb_archs;
   do
     install_packages $m $arch
-    for format in $jgb_format;
+    for format in $jgb_formats;
     do
       type=$(echo $format | jq -r .type)
       if [ $type == tar ] ; then

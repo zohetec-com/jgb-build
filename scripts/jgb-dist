@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 . jgb-helper
 
 jgb_date_short=$(date +%Y%m%d)
@@ -20,6 +20,23 @@ help()
     exit 1
 } >&2
 
+get_suffixes()
+{
+    for format in $jgb_formats;
+    do
+      type=$(echo $format | jq -r .type)
+      if [ "$type" == tar ] ; then
+        compress=$(echo $format | jq -r .compress)
+        for cmp in $compress;
+        do
+          jgb_suffixes+=" tar.$cmp"
+        done
+      else
+        jgb_suffixes+=" $type"
+      fi
+    done
+}
+
 while getopts  "d:Df:hp:uUv:" opt; do
   case ${opt} in
     d)
@@ -36,6 +53,9 @@ while getopts  "d:Df:hp:uUv:" opt; do
       ;;
     p)
       jgb_archs+=" $OPTARG"
+      ;;
+    t)
+      jgb_suffixes+=" $OPTARG"
       ;;
     u)
       jgb_operation="copy"
@@ -63,6 +83,11 @@ if [ -n "$jgb_list_file" ] ; then
     if [ -z "$jgb_archs" ] ; then
       jgb_archs=$(jq -r .architectures[] $jgb_list_file)
     fi
+
+    if [ -z "$jgb_suffixes" ] ; then
+      jgb_formats=$(jq -c .format[] $jgb_list_file)
+      get_suffixes
+    fi
 else
     shift $((OPTIND - 1))
     jgb_release=$1
@@ -75,14 +100,14 @@ for m in Debug Release;
 do
   for arch in $jgb_archs;
   do
-    for suffix in tar.gz tar.bz2 7z deb;
+    for suffix in $jgb_suffixes;
     do
         src_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.${suffix}
         src_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
         src_file_path=$src_dir/$src_file
         dst_dir=${JGB_BUILD_DIR}/dist/releases/${jgb_release}/$m
         dst_file_path=$dst_dir/$src_file
-        dst_file_short=${jgb_release}_${arch}.tar.${suffix}
+        dst_file_short=${jgb_release}_${arch}.${suffix}
         dst_file_short_path=$dst_dir/$dst_file_short
 
         if [ $jgb_operation == "copy" ] ; then
