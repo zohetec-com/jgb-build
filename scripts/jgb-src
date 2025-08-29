@@ -131,7 +131,7 @@ process_git_src()
   if [ -n "$variant" ] ; then
     #git fetch --tags
     #TODO：如果存在同名的 branch 和 tag，该如何处理？
-    git checkout $variant 2>/dev/null || {
+    git checkout $variant || {
         echo "variant not found: $variant"
         exit 1
     }
