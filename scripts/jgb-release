@@ -126,7 +126,7 @@ create_deb()
     # dpkg-architecture -L
     if [ "$arch" == x86_64 ] ; then
       deb_arch=amd64
-    elif [ "$arch" == aarch64 ] ; then
+    elif [[ "$arch" == "aarch64"* ]] ; then
       deb_arch=arm64
     fi
     local re_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.deb
