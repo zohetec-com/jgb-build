@@ -82,13 +82,10 @@ create_tar()
       exit 1
     fi
     local re_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.tar.${suffix}
-    local re_file_short=${jgb_release}_${arch}.tar.${suffix}
     local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
     local re_file_path=$re_dir/$re_file
-    local re_file_short_path=$re_dir/$re_file_short
     mkdir -p $re_dir
     tar -C $m -caf $re_file_path .
-    ln -sf $re_file $re_file_short_path
     echo created: $re_file_path
 }
 
@@ -101,15 +98,12 @@ create_7z()
     [ -n "$arch" ]
 
     local re_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.7z
-    local re_file_short=${jgb_release}_${arch}.7z
     local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
     local re_file_path=$re_dir/$re_file
-    local re_file_short_path=$re_dir/$re_file_short
     [ -f $re_file_path ] && rm $re_file_path
     mkdir -p $re_dir
     jgb_pushd $m
     7z a $re_file_path
-    ln -sf $re_file $re_file_short_path
     echo created: $re_file_path
     jgb_popd
 }
@@ -130,10 +124,8 @@ create_deb()
       deb_arch=arm64
     fi
     local re_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.deb
-    local re_file_short=${jgb_release}_${arch}.deb
     local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
     local re_file_path=$re_dir/$re_file
-    local re_file_short_path=$re_dir/$re_file_short
     local control_file=DEBIAN/control
     mkdir -p $re_dir
     jgb_pushd $m
@@ -148,7 +140,6 @@ create_deb()
         -e "s/JGB_VERSION/$jgb_version/g" \
         $control_file
     dpkg-deb --build . $re_file_path
-    ln -sf $re_file $re_file_short_path
     echo created: $re_file_path
     if [ -n "$jgb_destdir" ] ; then
       rm -r DEBIAN

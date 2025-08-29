@@ -8,14 +8,13 @@ jgb_archs=""
 
 help()
 {
-    echo "[Usage] jgb-dist [-d date] [-D] [-f FILE] [-h] [-p ARCH] [-v version] [-uU] <release>"
+    echo "[Usage] jgb-dist [-d date] [-D] [-f FILE] [-h] [-p ARCH] [-v version] <release>"
     echo "-d date 指定日期，缺省为当前日期"
     echo "-D 删除已发布(dist)的文件"
     echo "-f FILE 指定组装清单文件"
     echo "-h display this help text, then exit"
     echo "-p ARCH 选择目标架构"
-    echo "-u 发布文件，即从 local 目录拷贝到 dist 目录"
-    echo "-U 重新指定已发布(dist)的文件的当前版本（软连接）"
+    #echo "-u 发布文件，即从 local 目录拷贝到 dist 目录"
     echo "-v version 指定版本号"
     exit 1
 } >&2
@@ -37,7 +36,7 @@ get_suffixes()
     done
 }
 
-while getopts  "d:Df:hp:uUv:" opt; do
+while getopts  "d:Df:hp:v:" opt; do
   case ${opt} in
     d)
       jgb_date=$OPTARG
@@ -56,12 +55,6 @@ while getopts  "d:Df:hp:uUv:" opt; do
       ;;
     t)
       jgb_suffixes+=" $OPTARG"
-      ;;
-    u)
-      jgb_operation="copy"
-      ;;
-    U)
-      jgb_operation="update"
       ;;
     v)
       jgb_version=$OPTARG
@@ -107,28 +100,14 @@ do
         src_file_path=$src_dir/$src_file
         dst_dir=${JGB_BUILD_DIR}/dist/releases/${jgb_release}/$m
         dst_file_path=$dst_dir/$src_file
-        dst_file_short=${jgb_release}_${arch}.${suffix}
-        dst_file_short_path=$dst_dir/$dst_file_short
-
         if [ $jgb_operation == "copy" ] ; then
             if [ -f $src_file_path ] ; then
                 mkdir -p $dst_dir
                 /bin/cp -v $src_file_path $dst_dir
-                ln -vsf $src_file $dst_file_short_path
             fi
         elif [ $jgb_operation == "delete" ] ; then
-            if [ -h $dst_file_short_path ] ; then
-                lf=$(readlink $dst_file_short_path)
-                if [ "$lf" == $src_file ] ; then
-                    rm -v $dst_file_short_path
-                fi
-            fi
             if [ -f $dst_file_path ] ; then
                 rm -v $dst_file_path
-            fi
-        elif [ $jgb_operation == "update" ] ; then
-            if [ -f $dst_file_path ] ; then
-                ln -vsf $src_file $dst_file_short_path
             fi
         fi
     done
