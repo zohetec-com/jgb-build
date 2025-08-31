@@ -96,7 +96,7 @@ if [ -n "$jgb_list_file" ] ; then
 fi
 
 shift $((OPTIND - 1))
-pk_full_name=$1
-if [ -n "$pk_full_name" ] ; then
-    install_package $pk_full_name
-fi
+for pk_fn in "$@";
+do
+    install_package $pk_fn
+done

@@ -34,6 +34,21 @@ help()
     exit 1
 } >&2
 
+pack()
+{
+    local pk_full_name=$1
+    local pk=$(echo $pk_full_name | cut -d@ -f1)
+    local variant=$(echo $pk_full_name | cut -d@ -f2 -s)
+    [ -n "$variant" ] && extra_opt="-V $variant"
+    for m in Debug Release;
+    do
+        jgb-src -R $pk_full_name
+        jgb_pushd $pk
+        jgb-build -p${jgb_arch} -t${m} -RP $extra_opt
+        jgb_popd
+    done
+}
+
 while getopts  "hp:" opt; do
   case ${opt} in
     h)
@@ -48,24 +63,14 @@ while getopts  "hp:" opt; do
 done
 
 shift $((OPTIND - 1))
-pk_full_name=$1
-pk=$(echo $pk_full_name | cut -d@ -f1)
-variant=$(echo $pk_full_name | cut -d@ -f2 -s)
-[ -n "$variant" ] && extra_opt="-V $variant"
-
-if [ -z "$pk" ] ; then
-    help
-fi >&2
+[ $# -lt 1 ] && help
 
 [ -n "$JGB_BUILD_DIR" ]
 mkdir -p $jgb_pack_dir
 pack_tmp_dir=$(mktemp -d $jgb_pack_dir/$pk.XXXXXX)
 trap "echo rm $pack_tmp_dir; rm $pack_tmp_dir -rf" EXIT
 cd $pack_tmp_dir
-for m in Debug Release;
+for pk_fn in "$@";
 do
-    jgb-src -R $pk_full_name
-    jgb_pushd $pk
-    jgb-build -p${jgb_arch} -t${m} -RP $extra_opt
-    jgb_popd
+  pack $pk_fn
 done
