@@ -33,7 +33,7 @@ JGB_BUILD_SAVED="\
   JGB_BUILD_VERBOSE \
   JGB_BUILD_INSTALL \
   JGB_BUILD_RELATIVE_PATH"
-JGB_BUILD_OPTIONS="chiLPp:rRst:V:vw"
+JGB_BUILD_OPTIONS="chiLo:Pp:rRst:V:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
@@ -58,6 +58,7 @@ preset()
     export JGB_BUILD_MAKE_OPTIONS=
 
     # for make install
+    export JGB_BUILD_MAKE_INSTALL_TARGET=install
     export JGB_BUILD_MAKE_INSTALL_OPTIONS=
 }
 
@@ -144,11 +145,12 @@ trap release_lock EXIT
 
 help()
 {
-    echo "[Usage] jgb-build [-chiLPrRsvw] [-p ARCH] [-t Release|Debug] [-V VAR]"
+    echo "[Usage] jgb-build [-chiLPrRsvw] [-o TARGET] [-p ARCH] [-t Release|Debug] [-V VAR]"
     echo "-c 启用代码覆盖编译选项"
     echo "-h display this help text, then exit"
     echo "-i 执行安装"
     echo "-r 启用源文件相对路径编译选项"
+    echo "-o TARGET 指定 make 的安装目标(缺省为 install)"
     echo "-p ARCH 选择目标架构"
     echo "-R 重新构建"
     echo "-s 启用 sanitize 编译选项"
@@ -216,6 +218,9 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       ;;
     i)
       JGB_BUILD_INSTALL=yes
+      ;;
+    o)
+      JGB_BUILD_MAKE_INSTALL_TARGET=${OPTARG}
       ;;
     p)
       JGB_BUILD_TARGET_ARCH=${OPTARG}
@@ -375,7 +380,7 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     make $JGB_BUILD_MAKE_OPTIONS
     if [ "$JGB_BUILD_INSTALL" == yes ] ; then
       pre_install
-      make install $JGB_BUILD_MAKE_INSTALL_OPTIONS
+      make $JGB_BUILD_MAKE_INSTALL_TARGET $JGB_BUILD_MAKE_INSTALL_OPTIONS
     fi
   else
     echo "configure not found"
@@ -388,7 +393,7 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   make $JGB_BUILD_MAKE_OPTIONS
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     pre_install
-    make install DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
+    make $JGB_BUILD_MAKE_INSTALL_TARGET DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
 elif [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
   pre_install
