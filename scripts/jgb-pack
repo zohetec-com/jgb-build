@@ -44,7 +44,7 @@ pack()
     do
         jgb-src -R $pk_full_name
         jgb_pushd $pk
-        jgb-build -p${jgb_arch} -t${m} -RrP $extra_opt
+        jgb-build -p${jgb_arch} -t${m} -RP $extra_opt
         jgb_popd
     done
 }
