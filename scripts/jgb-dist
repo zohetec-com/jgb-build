@@ -49,7 +49,15 @@ get_suffixes()
         compress=$(echo $format | jq -r .compress)
         for cmp in $compress;
         do
-          jgb_suffixes+=" tar.$cmp"
+          if [ $cmp == gzip ] ; then
+            suffix=gz
+          elif [ $cmp == bzip2 ] ; then
+            suffix=bz2
+          else
+            echo "unknown compress type: $cmp"
+            exit 1
+          fi
+          jgb_suffixes+=" tar.$suffix"
         done
       else
         jgb_suffixes+=" $type"
