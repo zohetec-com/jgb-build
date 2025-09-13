@@ -61,6 +61,7 @@ preset()
     export JGB_BUILD_MAKE_INSTALL_TARGET=install
     export JGB_BUILD_MAKE_INSTALL_OPTIONS=
     export JGB_BUILD_INSTALL_FAKEROOT=
+    export JGB_BUILD_HOST=
 }
 
 save_set()
@@ -164,6 +165,25 @@ help()
     echo "-w 启用编译警告选项"
     exit 1
 } >&2
+
+include_cross_config()
+{
+    if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
+      ac_cross_config=$JGB_BUILD_CONFIG_DIR/cross.config
+      if [ -f $ac_cross_config ] ; then
+        . $ac_cross_config
+        JGB_BUILD_HOST=${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}
+        [ -n "$JGB_BUILD_HOST" ]
+      fi
+    fi
+}
+
+include_options()
+{
+    if [ -f $options_file ] ; then
+      . $options_file
+    fi
+}
 
 stat_time_start=$(date +%s.%N)
 
@@ -345,9 +365,7 @@ if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
       JGB_BUILD_CMAKE_OPTIONS+=" -C $cmake_TryRunResults_file"
     fi
   fi
-  if [ -f $options_file ] ; then
-    . $options_file
-  fi
+  include_options
   cmake -DCMAKE_INSTALL_PREFIX=$JGB_BUILD_DESTDIR $JGB_BUILD_CMAKE_OPTIONS -S . -B $JGB_BUILD_BUILD_DIR
   cmake  --build $JGB_BUILD_BUILD_DIR
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
@@ -367,19 +385,12 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
   # 执行顺序
   # 1 包含 cross.config。
   # 2 包含项目的 options。理由：options 可能需要引用 cross.config 中的信息，如交叉工具链的名称。
-  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
-    ac_cross_config=$JGB_BUILD_CONFIG_DIR/autoconf/cross.config
-    if [ -f $ac_cross_config ] ; then
-      . $ac_cross_config
-    fi
-  fi
-  if [ -f $options_file ] ; then
-    . $options_file
-  fi
+  include_cross_config
+  include_options
+
   if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
     if [ "$JGB_BUILD_CONFIGURE_OPTIONS_HOST" == yes ] ; then
-      [ -n "${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}" ]
-      JGB_BUILD_CONFIGURE_OPTIONS="--host=${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]} ${JGB_BUILD_CONFIGURE_OPTIONS}"
+      JGB_BUILD_CONFIGURE_OPTIONS="--host=${JGB_BUILD_HOST} ${JGB_BUILD_CONFIGURE_OPTIONS}"
     fi
   fi
   if [ -x configure ] ; then
@@ -394,15 +405,15 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     exit 1
   fi
 elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
-  if [ -f $options_file ] ; then
-    . $options_file
-  fi
+  include_cross_config
+  include_options
   make $JGB_BUILD_MAKE_OPTIONS
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     pre_install
     $JGB_BUILD_INSTALL_FAKEROOT make $JGB_BUILD_MAKE_INSTALL_TARGET DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
 elif [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
+  include_cross_config
   pre_install
   . local-build
 fi
