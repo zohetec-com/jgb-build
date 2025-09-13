@@ -7,8 +7,10 @@ gcc-14-aarch64-linux-gnu
 g++-14-aarch64-linux-gnu
 g++-aarch64-linux-gnu
 gcc-aarch64-linux-gnu
+gettext
 git
 lcov
 minicom
 tkcvs
 tree
+u-boot-tools
