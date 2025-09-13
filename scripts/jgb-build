@@ -33,7 +33,7 @@ JGB_BUILD_SAVED="\
   JGB_BUILD_VERBOSE \
   JGB_BUILD_INSTALL \
   JGB_BUILD_RELATIVE_PATH"
-JGB_BUILD_OPTIONS="chiLo:Pp:rRst:V:vw"
+JGB_BUILD_OPTIONS="cFhiLo:Pp:rRst:V:vw"
 JGB_BUILD_BACK_END=
 JGB_BUILD_BUILD_DIR="jgb.build"
 JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
@@ -60,6 +60,7 @@ preset()
     # for make install
     export JGB_BUILD_MAKE_INSTALL_TARGET=install
     export JGB_BUILD_MAKE_INSTALL_OPTIONS=
+    export JGB_BUILD_INSTALL_FAKEROOT=
 }
 
 save_set()
@@ -147,6 +148,7 @@ help()
 {
     echo "[Usage] jgb-build [-chiLPrRsvw] [-o TARGET] [-p ARCH] [-t Release|Debug] [-V VAR]"
     echo "-c 启用代码覆盖编译选项"
+    echo "-F 使用 fakeroot 执行 make install"
     echo "-h display this help text, then exit"
     echo "-i 执行安装"
     echo "-r 启用源文件相对路径编译选项"
@@ -213,6 +215,9 @@ while getopts $JGB_BUILD_OPTIONS opt; do
   case ${opt} in
     c)
       JGB_BUILD_COVERAGE=yes
+      ;;
+    F)
+      JGB_BUILD_INSTALL_FAKEROOT="fakeroot -- "
       ;;
     h)
       ;;
@@ -283,6 +288,8 @@ if [ "$JGB_BUILD_PACK" == yes ] ; then
   package_file_name_short=${package_name}${x_variant}.tar.gz
   mkdir -p $output_dir
 fi
+
+export PKG_CONFIG_PATH="${JGB_BUILD_DESTDIR}/lib/pkgconfig:${JGB_BUILD_DESTDIR}/lib64/pkgconfig:${JGB_BUILD_DESTDIR}/usr/lib/pkgconfig:${JGB_BUILD_DESTDIR}/usr/lib64/pkgconfig"
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
@@ -380,7 +387,7 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     make $JGB_BUILD_MAKE_OPTIONS
     if [ "$JGB_BUILD_INSTALL" == yes ] ; then
       pre_install
-      make $JGB_BUILD_MAKE_INSTALL_TARGET $JGB_BUILD_MAKE_INSTALL_OPTIONS
+      $JGB_BUILD_INSTALL_FAKEROOT make $JGB_BUILD_MAKE_INSTALL_TARGET $JGB_BUILD_MAKE_INSTALL_OPTIONS
     fi
   else
     echo "configure not found"
@@ -393,7 +400,7 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   make $JGB_BUILD_MAKE_OPTIONS
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     pre_install
-    make $JGB_BUILD_MAKE_INSTALL_TARGET DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
+    $JGB_BUILD_INSTALL_FAKEROOT make $JGB_BUILD_MAKE_INSTALL_TARGET DESTDIR=$JGB_BUILD_DESTDIR $JGB_BUILD_MAKE_INSTALL_OPTIONS
   fi
 elif [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
   pre_install
