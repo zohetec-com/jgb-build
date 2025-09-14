@@ -25,7 +25,11 @@ goto_top_dir()
 {
   while true;
   do
-      if [ -f CMakeLists.txt ] ; then
+      if [ -h local-build ] ; then
+        echo "top directory: $PWD"
+        JGB_BUILD_BACK_END="adhoc"
+        break
+      elif [ -f CMakeLists.txt ] ; then
         if grep -q "^project" CMakeLists.txt ; then
           echo "top directory: $PWD"
           JGB_BUILD_BACK_END="cmake"
@@ -38,10 +42,6 @@ goto_top_dir()
       elif [ -f Makefile ] && [ ! -f ../Makefile ] ; then
         echo "top directory: $PWD"
         JGB_BUILD_BACK_END="makefile"
-        break
-      elif [ -h local-build ] ; then
-        echo "top directory: $PWD"
-        JGB_BUILD_BACK_END="adhoc"
         break
       fi
 
