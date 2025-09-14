@@ -64,6 +64,10 @@ shift $((OPTIND - 1))
 pk_full_name=$1
 package=$(echo $pk_full_name | cut -d@ -f1)
 variant=$(echo $pk_full_name | cut -d@ -f2 -s)
+suffix_variant=
+if [ -n "$variant" ] ; then
+  suffix_variant="-${variant}"
+fi
 
 if [ -d $package ] ; then
   if [ "$O_Remove" == yes ] ; then
@@ -128,9 +132,10 @@ process_zip_src()
     exit 1
   fi
 
+  package_config_dir=$JGB_BUILD_CONFIG_DIR/${package}${suffix_variant}
   if [ $O_Patch == yes ] ; then
     jgb_pushd $package
-    for pf in $(ls $JGB_BUILD_CONFIG_DIR/$package/*.patch 2>/dev/null);
+    for pf in $(ls $package_config_dir/*.patch 2>/dev/null);
     do
       patch -p1 < $pf
     done
@@ -139,8 +144,8 @@ process_zip_src()
     echo "已跳过应用补丁"
   fi
 
-  if [ -x $JGB_BUILD_CONFIG_DIR/$package/local-build ] || [ -h $JGB_BUILD_CONFIG_DIR/$package/local-build ]; then
-    ln -vs $JGB_BUILD_CONFIG_DIR/$package/local-build $package
+  if [ -x $package_config_dir/local-build ] || [ -h $package_config_dir/local-build ]; then
+    ln -vs $package_config_dir/local-build $package
   fi
 }
 

@@ -261,7 +261,7 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       ;;
     V)
       variant_name=${OPTARG}
-      x_variant="_${variant_name}"
+      suffix_variant="_${variant_name}"
       ;;
     v)
       JGB_BUILD_VERBOSE=yes
@@ -296,7 +296,7 @@ if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   # 创建参考时间戳文件
   ref_file=$(mktemp $PWD/$JGB_BUILD_BUILD_DIR/jgb-build.pack.XXXX)
   check_file_timestamp
-  install_file=${package_name}${x_variant}.install
+  install_file=${package_name}${suffix_variant}.install
   # 清除已安装的文件和目录，以确保重新安装全部文件和目录，确保打包结果完整。
   clean $install_file
 fi
@@ -304,8 +304,8 @@ fi
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   [ -n "$pack_dir" ]
   output_dir=${JGB_BUILD_DIR}/$pack_dir/packages/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
-  package_file_name=${package_name}${x_variant}-$(date +%Y%m%d).tar.gz
-  package_file_name_short=${package_name}${x_variant}.tar.gz
+  package_file_name=${package_name}${suffix_variant}-$(date +%Y%m%d).tar.gz
+  package_file_name_short=${package_name}${suffix_variant}.tar.gz
   mkdir -p $output_dir
 fi
 

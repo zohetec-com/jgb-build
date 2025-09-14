@@ -41,15 +41,18 @@ push()
     pk_full_name=$1
     pk=$(echo $pk_full_name | cut -d@ -f1)
     variant=$(echo $pk_full_name | cut -d@ -f2 -s)
-    [ -n "$variant" ] && extra_opt="-V $variant"
+    if [ -n "$variant" ] ; then
+      extra_opt="-V $variant"
+      suffix_variant="_${variant}"
+    fi
     for m in Debug Release;
     do
         src_dir=${JGB_BUILD_DIR}/local/packages/$m/${jgb_arch}/${pk}
         dst_dir=${JGB_BUILD_DIR}/dist/packages/$m/${jgb_arch}/${pk}
-        package_file_name=${pk}${x_variant}-$(date +%Y%m%d).tar.gz
+        package_file_name=${pk}${suffix_variant}-$(date +%Y%m%d).tar.gz
         src_file_path=$src_dir/$package_file_name
         dst_file_path=$dst_dir/$package_file_name
-        package_file_name_short=${pk}${x_variant}.tar.gz
+        package_file_name_short=${pk}${suffix_variant}.tar.gz
         if [ "$clean" == yes ] ; then
             rm -vf $src_file_path
             rm -vf $src_dir/$package_file_name_short

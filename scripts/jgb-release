@@ -54,11 +54,11 @@ install_packages()
       [ $pk_full_name != null ]
       pk=$(echo $pk_full_name | cut -d@ -f1)
       variant=$(echo $pk_full_name | cut -d@ -f2 -s)
-      x_variant=
+      suffix_variant=
       if [ -n "$variant" ] ; then
-        x_variant="_${variant}"
+        suffix_variant="_${variant}"
       fi
-      pk_file=${pk}${x_variant}.tar.gz
+      pk_file=${pk}${suffix_variant}.tar.gz
       # 优先使用本地发布的版本。
       pk_file_path=${JGB_BUILD_DIR}/local/packages/$m/$arch/$pk/$pk_file
       if [ -f $pk_file_path ] ; then
