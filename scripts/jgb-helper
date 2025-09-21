@@ -35,6 +35,10 @@ goto_top_dir()
           JGB_BUILD_BACK_END="cmake"
           break
         fi
+      elif [ -f meson.build ] ; then
+        echo "top directory: $PWD"
+        JGB_BUILD_BACK_END="meson"
+        break
       elif [ -f configure.ac ] || [ -x configure ] ; then
         echo "top directory: $PWD"
         JGB_BUILD_BACK_END="autoconf"

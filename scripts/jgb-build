@@ -309,7 +309,12 @@ if [ "$JGB_BUILD_PACK" == yes ] ; then
   mkdir -p $output_dir
 fi
 
-export PKG_CONFIG_PATH="${JGB_BUILD_DESTDIR}/lib/pkgconfig:${JGB_BUILD_DESTDIR}/lib64/pkgconfig:${JGB_BUILD_DESTDIR}/usr/lib/pkgconfig:${JGB_BUILD_DESTDIR}/usr/lib64/pkgconfig"
+# lib/pkgconfig -- 一般情况
+# lib64/pkgconfig -- openssl-3.0.16
+# share/pkgconfig -- zlib
+export PKG_CONFIG_PATH="${JGB_BUILD_DESTDIR}/lib/pkgconfig: \
+                        ${JGB_BUILD_DESTDIR}/lib64/pkgconfig: \
+                        ${JGB_BUILD_DESTDIR}/share/pkgconfig"
 
 export CFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
 export CXXFLAGS="-I${JGB_BUILD_DESTDIR}/include -I${JGB_BUILD_DESTDIR}/usr/include"
@@ -371,6 +376,24 @@ if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     pre_install
     cmake --install $JGB_BUILD_BUILD_DIR
+  fi
+elif [ "$JGB_BUILD_BACK_END" == "meson" ] ; then
+  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
+    meson_cross_file=${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}.cross
+    meson_cross_file_path=$JGB_BUILD_CONFIG_DIR/meson/$meson_cross_file
+    if [ -f $meson_cross_file_path ] ; then
+      JGB_BUILD_MESON_OPTIONS+=" --cross-file=$meson_cross_file_path"
+    else
+      echo "没有找到 $meson_cross_file 文件"
+      exit 1
+    fi
+  fi
+  include_options
+  meson setup --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_MESON_OPTIONS $JGB_BUILD_BUILD_DIR
+  ninja -C $JGB_BUILD_BUILD_DIR
+  if [ "$JGB_BUILD_INSTALL" == yes ] ; then
+    pre_install
+    ninja -C $JGB_BUILD_BUILD_DIR install
   fi
 elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
   if [ ! -x configure ] ; then
