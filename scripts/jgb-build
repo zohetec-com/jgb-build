@@ -25,7 +25,7 @@ set -e
 . jgb-helper
 
 JGB_BUILD_SAVED="\
-  JGB_BUILD_TARGET_ARCH \
+  JGB_BUILD_HOST_ARCH \
   JGB_BUILD_TYPE \
   JGB_BUILD_COVERAGE \
   JGB_BUILD_SANITIZE \
@@ -41,7 +41,7 @@ JGB_BUILD_CACHE_FILE="$JGB_BUILD_BUILD_DIR/jgb-cache"
 preset()
 {
     export JGB_BUILD_BUILD_ARCH=$(uname -p)
-    export JGB_BUILD_TARGET_ARCH=$(uname -p)
+    export JGB_BUILD_HOST_ARCH=$(uname -p)
     export JGB_BUILD_TYPE="Release"
     JGB_BUILD_COVERAGE=no
     JGB_BUILD_SANITIZE=no
@@ -168,11 +168,11 @@ help()
 
 include_cross_config()
 {
-    if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
+    if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_HOST_ARCH ] ; then
       ac_cross_config=$JGB_BUILD_CONFIG_DIR/cross.config
       if [ -f $ac_cross_config ] ; then
         . $ac_cross_config
-        JGB_BUILD_HOST=${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}]}
+        JGB_BUILD_HOST=${JGB_BUILD_CONFIG_HOST[${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_HOST_ARCH}]}
         [ -n "$JGB_BUILD_HOST" ]
       fi
     fi
@@ -248,7 +248,7 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       JGB_BUILD_MAKE_INSTALL_TARGET=${OPTARG}
       ;;
     p)
-      JGB_BUILD_TARGET_ARCH=${OPTARG}
+      JGB_BUILD_HOST_ARCH=${OPTARG}
       ;;
     r)
       JGB_BUILD_RELATIVE_PATH=yes
@@ -279,8 +279,8 @@ save_set
 
 JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
 
-if [ "$JGB_BUILD_TARGET_ARCH" == arm64 ] ; then
-  JGB_BUILD_TARGET_ARCH="aarch64"
+if [ "$JGB_BUILD_HOST_ARCH" == arm64 ] ; then
+  JGB_BUILD_HOST_ARCH="aarch64"
 fi
 
 if [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
@@ -288,7 +288,7 @@ if [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
   JGB_BUILD_INSTALL=yes
 fi
 
-export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_TARGET_ARCH"
+export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_HOST_ARCH"
 
 if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   mkdir -p $JGB_BUILD_DESTDIR
@@ -303,7 +303,7 @@ fi
 
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   [ -n "$pack_dir" ]
-  output_dir=${JGB_BUILD_DIR}/$pack_dir/packages/$JGB_BUILD_TYPE/${JGB_BUILD_TARGET_ARCH}/${package_name}
+  output_dir=${JGB_BUILD_DIR}/$pack_dir/packages/$JGB_BUILD_TYPE/${JGB_BUILD_HOST_ARCH}/${package_name}
   package_file_name=${package_name}${suffix_variant}-$(date +%Y%m%d).tar.gz
   package_file_name_short=${package_name}${suffix_variant}.tar.gz
   mkdir -p $output_dir
@@ -357,15 +357,15 @@ fi
 
 options_file=$JGB_BUILD_CONFIG_DIR/$package_name/options
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
-  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
-    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}.toolchain
+  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_HOST_ARCH ] ; then
+    cmake_toolchain_file=$JGB_BUILD_CONFIG_DIR/cmake/${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_HOST_ARCH}.toolchain
     if [ -f $cmake_toolchain_file ] ; then
         JGB_BUILD_CMAKE_OPTIONS+=" -DCMAKE_TOOLCHAIN_FILE=$cmake_toolchain_file"
     else
-        echo "没有找到 $JGB_BUILD_BUILD_ARCH-$JGB_BUILD_TARGET_ARCH.toolchain 文件"
+        echo "没有找到 $JGB_BUILD_BUILD_ARCH-$JGB_BUILD_HOST_ARCH.toolchain 文件"
         exit 1
     fi
-    cmake_TryRunResults_file=$JGB_BUILD_CONFIG_DIR/$package_name/${JGB_BUILD_TARGET_ARCH}-TryRunResults.cmake
+    cmake_TryRunResults_file=$JGB_BUILD_CONFIG_DIR/$package_name/${JGB_BUILD_HOST_ARCH}-TryRunResults.cmake
     if [ -f $cmake_TryRunResults_file ] ; then
       JGB_BUILD_CMAKE_OPTIONS+=" -C $cmake_TryRunResults_file"
     fi
@@ -378,8 +378,8 @@ if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
     cmake --install $JGB_BUILD_BUILD_DIR
   fi
 elif [ "$JGB_BUILD_BACK_END" == "meson" ] ; then
-  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
-    meson_cross_file=${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_TARGET_ARCH}.cross
+  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_HOST_ARCH ] ; then
+    meson_cross_file=${JGB_BUILD_BUILD_ARCH}-${JGB_BUILD_HOST_ARCH}.cross
     meson_cross_file_path=$JGB_BUILD_CONFIG_DIR/meson/$meson_cross_file
     if [ -f $meson_cross_file_path ] ; then
       JGB_BUILD_MESON_OPTIONS+=" --cross-file=$meson_cross_file_path"
@@ -411,7 +411,7 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
   include_cross_config
   include_options
 
-  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_TARGET_ARCH ] ; then
+  if [ "$JGB_BUILD_BUILD_ARCH" != $JGB_BUILD_HOST_ARCH ] ; then
     if [ "$JGB_BUILD_CONFIGURE_OPTIONS_HOST" == yes ] ; then
       JGB_BUILD_CONFIGURE_OPTIONS="--host=${JGB_BUILD_HOST} ${JGB_BUILD_CONFIGURE_OPTIONS}"
     fi
