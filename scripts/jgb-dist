@@ -113,6 +113,7 @@ if [ -n "$jgb_list_file" ] ; then
 else
     shift $((OPTIND - 1))
     jgb_release=$1
+    jgb_release=${jgb_release%/}
 fi
 
 [ -n "$jgb_release" ] || help
