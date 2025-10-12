@@ -10,7 +10,7 @@ do
 	do
 		jgb-src -R $pkg
 		cd $pkg
-		jgb-build -Ri -p $arch
+		jgb-build -RiL -p $arch
 		cd ..
 	done
 	cd ..
