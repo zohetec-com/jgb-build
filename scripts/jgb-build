@@ -199,6 +199,7 @@ stat_time_start=$(date +%s.%N)
 goto_top_dir
 JGB_BUILD_TOP_DIR=$PWD
 package_name=$(basename $PWD)
+fakeroot_cmd=
 preset
 
 while getopts $JGB_BUILD_OPTIONS opt; do
@@ -246,7 +247,7 @@ while getopts $JGB_BUILD_OPTIONS opt; do
       JGB_BUILD_COVERAGE=yes
       ;;
     F)
-      JGB_BUILD_INSTALL_FAKEROOT="fakeroot -- "
+      JGB_BUILD_INSTALL_FAKEROOT=yes
       ;;
     h)
       ;;
@@ -290,6 +291,8 @@ if [ "$JGB_BUILD_HOST_ARCH" == arm64 ] ; then
   JGB_BUILD_HOST_ARCH="aarch64"
 fi
 
+export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_HOST_ARCH"
+
 # 载入文件配置
 include_cross_config
 include_options
@@ -298,8 +301,6 @@ if [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
   # 简化处理：构建即安装。
   JGB_BUILD_INSTALL=yes
 fi
-
-export JGB_BUILD_DESTDIR="$JGB_BUILD_DIR/$JGB_BUILD_TYPE/$JGB_BUILD_HOST_ARCH"
 
 if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   mkdir -p $JGB_BUILD_DESTDIR
@@ -310,6 +311,10 @@ if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   install_file=${package_name}${suffix_variant}.install
   # 清除已安装的文件和目录，以确保重新安装全部文件和目录，确保打包结果完整。
   clean $install_file
+
+  if [ "$JGB_BUILD_INSTALL_FAKEROOT" == yes ] ; then
+    fakeroot_cmd="fakeroot -- "
+  fi
 fi
 
 if [ "$JGB_BUILD_PACK" == yes ] ; then
@@ -427,11 +432,11 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     fi
   fi
   if [ -x configure ] ; then
-    ./configure --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_CONFIGURE_OPTIONS
+    ./configure --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_CONFIGURE_OPTIONS $CONFIGURE_OPTIONS
     make $JGB_BUILD_MAKE_OPTIONS
     if [ "$JGB_BUILD_INSTALL" == yes ] ; then
       pre_install
-      $JGB_BUILD_INSTALL_FAKEROOT make $JGB_BUILD_MAKE_INSTALL_TARGET
+      $fakeroot_cmd make $JGB_BUILD_MAKE_INSTALL_TARGET
     fi
   else
     echo "configure not found"
@@ -442,7 +447,7 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
   make $JGB_BUILD_MAKE_OPTIONS $MAKE_OPTIONS
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     pre_install
-    $JGB_BUILD_INSTALL_FAKEROOT make $JGB_BUILD_MAKE_INSTALL_TARGET DESTDIR=$JGB_BUILD_DESTDIR $MAKE_INSTALL_OPTIONS
+    $fakeroot_cmd make $JGB_BUILD_MAKE_INSTALL_TARGET DESTDIR=$JGB_BUILD_DESTDIR $MAKE_INSTALL_OPTIONS
   fi
 elif [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
   pre_install
