@@ -194,6 +194,34 @@ include_options()
     fi
 }
 
+fill_info()
+{
+  if is_cross_compile ; then
+    local toolchain_prefix=${JGB_BUILD_HOST}-
+  fi
+  if [ -f /etc/lsb-release ] ; then
+    . /etc/lsb-release
+  fi
+cat << EOF > ${output_dir}/$info_file
+{
+  "name":"$package_name",
+  "variant":"$variant_name",
+  "commit":"$(git rev-parse HEAD 2>/dev/null || true)",
+  "file":"$package_file",
+  "install":"$package_install_file",
+  "size":$(stat --printf=%s ${output_dir}/$package_file),
+  "date":"$(date)",
+  "type":"$JGB_BUILD_TYPE",
+  "arch":"$JGB_BUILD_HOST_ARCH",
+  "host":"$JGB_BUILD_HOST",
+  "gcc":"$(${toolchain_prefix}gcc --version | head -n1)",
+  "nodename":"$(uname -n)",
+  "distro":"$DISTRIB_DESCRIPTION"
+}
+EOF
+  ln -sf ${info_file} ${output_dir}/${info_file_symlink}
+}
+
 stat_time_start=$(date +%s.%N)
 
 goto_top_dir
@@ -320,8 +348,12 @@ fi
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   [ -n "$pack_dir" ]
   output_dir=${JGB_BUILD_DIR}/$pack_dir/packages/$JGB_BUILD_TYPE/${JGB_BUILD_HOST_ARCH}/${package_name}
-  package_file_name=${package_name}${suffix_variant}-$(date +%Y%m%d).tar.gz
-  package_file_name_short=${package_name}${suffix_variant}.tar.gz
+  suffix_date=$(date +%Y%m%d)
+  package_file=${package_name}${suffix_variant}-${suffix_date}.tar.gz
+  package_file_symlink=${package_name}${suffix_variant}.tar.gz
+  info_file=${package_name}${suffix_variant}-${suffix_date}.info
+  info_file_symlink=${package_name}${suffix_variant}.info
+  package_install_file=${package_name}${suffix_variant}-${suffix_date}.install
   mkdir -p $output_dir
 fi
 
@@ -454,20 +486,26 @@ elif [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
   . local-build
 fi
 
-if [ "$JGB_BUILD_PACK" == yes ] ; then
-  [ -f ${output_dir}/${package_file_name} ] && rm -f ${output_dir}/${package_file_name}
-  jgb_pushd $JGB_BUILD_DESTDIR
-  find . -newercc $ref_file -print0 | tar --null -czf ${output_dir}/${package_file_name} --no-recursion --files-from=-
-  jgb_popd
-  ln -sf ${package_file_name} ${output_dir}/${package_file_name_short}
-  echo "打包完成: $output_dir/$package_file_name" "  [ $package_file_name_short ]"
-fi
-
 if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   jgb_pushd $JGB_BUILD_DESTDIR
   find . -newercc $ref_file ! -name $install_file > $install_file
-  rm $ref_file
   jgb_popd
+fi
+
+if [ "$JGB_BUILD_PACK" == yes ] ; then
+  /bin/cp -v ${JGB_BUILD_DESTDIR}/$install_file ${output_dir}/$package_install_file
+  ln -sfv ${package_install_file} ${output_dir}/$install_file
+  [ -f ${output_dir}/${package_file} ] && rm -f ${output_dir}/${package_file}
+  jgb_pushd $JGB_BUILD_DESTDIR
+  find . -newercc $ref_file -print0 | tar --null -czf ${output_dir}/${package_file} --no-recursion --files-from=-
+  jgb_popd
+  ln -sf ${package_file} ${output_dir}/${package_file_symlink}
+  fill_info
+  echo "打包完成: $output_dir/$package_file" "  [ $package_file_symlink ]"
+fi
+
+if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
+  rm $ref_file
 fi
 
 stat_time_end=$(date +%s.%N)
