@@ -377,24 +377,24 @@ export CXXFLAGS="$CFLAGS"
 export LDFLAGS="-L${ld_dirs[0]} -L${ld_dirs[1]}"
 
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
-  CFLAGS="$CFLAGS -DDEBUG -g -O0"
-  CXXFLAGS="$CXXFLAGS -DDEBUG -g -O0"
+  CFLAGS+=" -DDEBUG -g -O0"
+  CXXFLAGS+=" -DDEBUG -g -O0"
 fi
 
 if [ "$JGB_BUILD_COVERAGE" == yes ] ; then
-  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage -fprofile-update=atomic"
-  CXXFLAGS="$CXXFLAGS -fprofile-arcs -ftest-coverage -fprofile-update=atomic"
+  CFLAGS+=" -fprofile-arcs -ftest-coverage -fprofile-update=atomic"
+  CXXFLAGS+=" -fprofile-arcs -ftest-coverage -fprofile-update=atomic"
 fi
 
 if [ "$JGB_BUILD_SANITIZE" == yes ] ; then
-  CFLAGS="$CFLAGS -fsanitize=address"
-  CXXFLAGS="$CXXFLAGS -fsanitize=address"
-  LDFLAGS="$LDFLAGS -fsanitize=address"
+  CFLAGS+=" -fsanitize=address"
+  CXXFLAGS+=" -fsanitize=address"
+  LDFLAGS+=" -fsanitize=address"
 fi
 
 if [ "$JGB_BUILD_WALL" == yes ] ; then
-  CFLAGS="$CFLAGS -Werror -Wall -Wextra"
-  CXXFLAGS="$CXXFLAGS -Werror -Wall -Wextra"
+  CFLAGS+=" -Werror -Wall -Wextra"
+  CXXFLAGS+=" -Werror -Wall -Wextra"
 fi
 
 if [ "$JGB_BUILD_RELATIVE_PATH" == yes ] && [ "$JGB_BUILD_COVERAGE" != yes ] ; then
@@ -402,9 +402,13 @@ if [ "$JGB_BUILD_RELATIVE_PATH" == yes ] && [ "$JGB_BUILD_COVERAGE" != yes ] ; t
   # 参考
   # 1 https://cmake.cmake.narkive.com/doNN52ay/file-relative-path
   # 2 https://stackoverflow.com/questions/8487986/file-macro-shows-full-path
-  CFLAGS="$CFLAGS -ffile-prefix-map=$PWD=$package_name"
-  CXXFLAGS="$CXXFLAGS -ffile-prefix-map=$PWD=$package_name"
+  CFLAGS+=" -ffile-prefix-map=$PWD=$package_name"
+  CXXFLAGS+=" -ffile-prefix-map=$PWD=$package_name"
 fi
+
+CFLAGS+=" $CFLAGS_OPTIONS"
+CXXFLAGS+=" $CXXFLAGS_OPTIONS"
+LDFLAGS+=" $LDFLAGS_OPTIONS"
 
 if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
   JGB_BUILD_CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=$JGB_BUILD_TYPE"
