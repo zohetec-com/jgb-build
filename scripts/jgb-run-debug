@@ -2,6 +2,8 @@
 set -e
 . jgb-helper
 jgb-build
-PATH=$HOME/jgb-build.dir/Debug/$(uname -p)/bin:$HOME/jgb-build.dir/Debug/$(uname -p)/sbin:/local/sbin:/local/bin:/sbin:/bin
-export LD_LIBRARY_PATH=$JGB_BUILD_DIR/Debug/$(uname -p)/lib
+JGB_DEBUG_DIR=$JGB_BUILD_DIR/Debug/$(uname -p)
+PATH=$JGB_DEBUG_DIR/bin:$JGB_DEBUG_DIR/sbin:/local/sbin:/local/bin:/sbin:/bin
+# ubuntu 20.04 x86_64 编译 openssl-3.0.16 安装到 lib64 目录
+export LD_LIBRARY_PATH=$JGB_DEBUG_DIR/lib:$JGB_DEBUG_DIR/lib64
 $@
