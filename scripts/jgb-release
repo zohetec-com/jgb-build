@@ -53,13 +53,27 @@ install_packages()
 
     cat << EOF > $info_file_path
     {
+      "release": "$jgb_release",
+      "version": "$jgb_version",
+      "date": "$jgb_date",
+      "config": "$m",
+      "arch": "$arch"
+    }
+EOF
+
+    local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
+    detail_info_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.json
+    detail_info_file_path=$re_dir/$detail_info_file
+
+    cat << EOF > $detail_info_file_path
+    {
       "release":"$jgb_release",
       "version":"$jgb_version",
       "date":"$jgb_date",
       "config":"$m",
+      "arch": "$arch",
       "packages": [
 EOF
-
     n=0
     s_dist=
     n_local=0
@@ -74,10 +88,10 @@ EOF
         suffix_variant="_${variant}"
       fi
       pk_file=${pk}${suffix_variant}.tar.gz
-      info_file=${pk}${suffix_variant}.info
+      pk_info_file=${pk}${suffix_variant}.info
       # 优先使用本地发布的版本。
       pk_file_path=${JGB_BUILD_DIR}/local/packages/$m/$arch/$pk/$pk_file
-      pk_info_file_path=${JGB_BUILD_DIR}/local/packages/$m/$arch/$pk/$info_file
+      pk_info_file_path=${JGB_BUILD_DIR}/local/packages/$m/$arch/$pk/$pk_info_file
       if [ -f $pk_file_path ] ; then
         notify_msg="[local]"
         if [ $n_local -gt 0 ] ; then
@@ -87,7 +101,7 @@ EOF
         n_local=$((n_local+1))
       else
         pk_file_path=${JGB_BUILD_DIR}/dist/packages/$m/$arch/$pk/$pk_file
-        pk_info_file_path=${JGB_BUILD_DIR}/dist/packages/$m/$arch/$pk/$info_file
+        pk_info_file_path=${JGB_BUILD_DIR}/dist/packages/$m/$arch/$pk/$pk_info_file
       fi
       if [ ! -f $pk_file_path ] ; then
         echo "not found: $pk [ $pk_file_path ]"
@@ -97,12 +111,12 @@ EOF
       tar -C $m/$jgb_destdir -xf $pk_file_path $jgb_tar_opt
 
       if [ $n -gt 0 ] ; then
-        echo , >> $info_file_path
+        echo , >> $detail_info_file_path
       fi
       if [ -f $pk_info_file_path ] ; then
-        cat $pk_info_file_path >> $info_file_path
+        cat $pk_info_file_path >> $detail_info_file_path
       else
-        cat << EOF >> $info_file_path
+        cat << EOF >> $detail_info_file_path
         {
           "name":"$pk",
           "file":"$(readlink $pk_file_path)"
@@ -121,7 +135,7 @@ EOF
     mv $chksum_file sha256sum.txt
     jgb_popd
 
-    cat << EOF >> $info_file_path
+    cat << EOF >> $detail_info_file_path
       ],
       "dist": [ $s_dist ],
       "local": [ $s_local ]
