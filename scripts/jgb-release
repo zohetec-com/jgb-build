@@ -108,7 +108,8 @@ EOF
         exit 1
       fi
       echo "extract: $pk_full_name $notify_msg"
-      tar -C $m/$jgb_destdir -xf $pk_file_path $jgb_tar_opt
+      local install_file=${pk}${suffix_variant}.install
+      tar -C $m/$jgb_destdir -xf $pk_file_path $jgb_tar_opt --exclude=$install_file
 
       if [ $n -gt 0 ] ; then
         echo , >> $detail_info_file_path
