@@ -10,6 +10,7 @@ install(PROGRAMS
     jgb-src
     jgb-run-debug
     jgb-lcov
+    jgb-find
     jgb-rebuild-debug
     jgb-run-release
     DESTINATION bin)

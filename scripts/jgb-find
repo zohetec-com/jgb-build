@@ -1,0 +1,54 @@
+#!/bin/bash
+#set -x
+set -e
+
+. jgb-helper
+
+help()
+{
+    echo jgb-find [-h] [-L] [-p ARCH] [-t TYPE] <pattern>
+    echo "-h display this help text, then exit"
+    echo "-L search in local packages instead of dist"
+    echo "-p ARCH 选择目标架构"
+    echo "-t TYPE 选择构建类型 (Release/Debug)"
+    exit 1
+} >&2
+
+my_grep()
+{
+    if grep -q "$pattern" $1; then
+        echo $(basename $(dirname $1))":"
+        grep "$pattern" $1
+    fi
+}
+
+pack_dir=dist
+JGB_BUILD_HOST_ARCH=$(uname -p)
+JGB_BUILD_TYPE="Release"
+
+while getopts hLp:t: opt; do
+  case ${opt} in
+    h)
+      help
+      ;;
+    L)
+      pack_dir=local
+      ;;
+    p)
+      JGB_BUILD_HOST_ARCH=$OPTARG
+      ;;
+    t)
+      JGB_BUILD_TYPE=${OPTARG}
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+[ $# -lt 1 ] && help
+export pattern="$@"
+export -f my_grep
+
+output_dir=${JGB_BUILD_DIR}/$pack_dir/packages/$JGB_BUILD_TYPE/${JGB_BUILD_HOST_ARCH}
+
+find -L $output_dir \
+  \( -xtype l -and -name '*.install' \) -exec bash -c 'my_grep "$0"' {} \;
