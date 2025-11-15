@@ -136,7 +136,10 @@ process_zip_src()
   package_config_dir=$JGB_BUILD_CONFIG_DIR/${package}${suffix_variant}
   if [ $O_Patch == yes ] ; then
     jgb_pushd $package
-    for pf in $(ls $package_config_dir/*.patch 2>/dev/null);
+    # https://man7.org/linux/man-pages/man7/glob.7.html
+    # https://medium.com/@sisi_hj/use-bash-globs-to-navigate-through-file-system-1b4ea7ecf991
+    shopt -s nullglob
+    for pf in $package_config_dir/*.patch;
     do
       patch -p1 < $pf
     done
