@@ -11,6 +11,7 @@ install(PROGRAMS
     jgb-run-debug
     jgb-lcov
     jgb-find
+    jgb-dir
     jgb-rebuild-debug
     jgb-run-release
     DESTINATION bin)
