@@ -6,7 +6,7 @@ set -e
 
 help()
 {
-    echo jgb-find [-h] [-L] [-p ARCH] [-t TYPE] <pattern>
+    echo jgb-find [-h] [-L] [-p ARCH] [-t TYPE] "<pattern>"
     echo "-h display this help text, then exit"
     echo "-L search in local packages instead of dist"
     echo "-p ARCH 选择目标架构"

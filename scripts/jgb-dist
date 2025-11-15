@@ -65,10 +65,10 @@ get_suffixes()
     done
 }
 
-while getopts  "d:Df:hp:v:" opt; do
+while getopts  "d:Df:hp:t:v:" opt; do
   case ${opt} in
     d)
-      jgb_date=$OPTARG
+      jgb_date_short=$OPTARG
       ;;
     D)
       jgb_operation="delete"

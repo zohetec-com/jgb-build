@@ -225,7 +225,6 @@ EOF
 stat_time_start=$(date +%s.%N)
 
 goto_top_dir
-JGB_BUILD_TOP_DIR=$PWD
 package_name=$(basename $PWD)
 fakeroot_cmd=
 preset

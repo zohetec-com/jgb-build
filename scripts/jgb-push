@@ -43,7 +43,6 @@ push()
     pk=$(echo $pk_full_name | cut -d@ -f1)
     variant=$(echo $pk_full_name | cut -d@ -f2 -s)
     if [ -n "$variant" ] ; then
-      extra_opt="-V $variant"
       suffix_variant="_${variant}"
     fi
     for m in Debug Release;
