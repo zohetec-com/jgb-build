@@ -335,7 +335,8 @@ if [ "$JGB_BUILD_INSTALL" == yes  ] ; then
   # 创建参考时间戳文件
   ref_file=$(mktemp $PWD/$JGB_BUILD_BUILD_DIR/jgb-build.pack.XXXX)
   check_file_timestamp
-  install_file=${package_name}${suffix_variant}.install
+  # install_file -- 安装清单文件，要确保先后发布不同变种，都能够清除干净。
+  install_file=${package_name}.install
   # 清除已安装的文件和目录，以确保重新安装全部文件和目录，确保打包结果完整。
   clean $install_file
 
@@ -353,6 +354,7 @@ if [ "$JGB_BUILD_PACK" == yes ] ; then
   info_file=${package_name}${suffix_variant}-${suffix_date}.info
   info_file_symlink=${package_name}${suffix_variant}.info
   package_install_file=${package_name}${suffix_variant}-${suffix_date}.install
+  package_install_file_short=${package_name}${suffix_variant}.install
   mkdir -p $output_dir
 fi
 
@@ -497,7 +499,7 @@ fi
 
 if [ "$JGB_BUILD_PACK" == yes ] ; then
   /bin/cp -v ${JGB_BUILD_DESTDIR}/$install_file ${output_dir}/$package_install_file
-  ln -sfv ${package_install_file} ${output_dir}/$install_file
+  ln -sfv ${package_install_file} ${output_dir}/$package_install_file_short
   [ -f ${output_dir}/${package_file} ] && rm -f ${output_dir}/${package_file}
   jgb_pushd $JGB_BUILD_DESTDIR
   find . -newercc $ref_file -print0 | tar --null -czf ${output_dir}/${package_file} --no-recursion --files-from=-
