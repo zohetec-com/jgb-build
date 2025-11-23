@@ -49,7 +49,7 @@ done
 LANG=C
 shopt -s nullglob
 
-output_file=$(mktemp /tmp/jdb-dir.XXXX)
+output_file=$(mktemp /tmp/jgb-dir.XXXX)
 trap 'rm -f "output_file"' EXIT
 count=0
 
