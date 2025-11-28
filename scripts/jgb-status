@@ -27,7 +27,7 @@ jgb_arch=$(uname -p)
 
 help()
 {
-    echo "[Usage] jgb-dir [-h] [-p ARCH]"
+    echo "[Usage] jgb-status [-h] [-p ARCH]"
     echo "-h display this help text, then exit"
     echo "-p ARCH 选择目标架构"
     exit 1
@@ -49,7 +49,7 @@ done
 LANG=C
 shopt -s nullglob
 
-output_file=$(mktemp /tmp/jgb-dir.XXXX)
+output_file=$(mktemp /tmp/jgb-status.XXXX)
 trap 'rm -f "output_file"' EXIT
 count=0
 
