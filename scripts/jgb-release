@@ -144,6 +144,59 @@ EOF
 EOF
 }
 
+strip_packages()
+{
+    local m=$1
+    local arch=$2
+
+    [ -n "$m" ]
+    [ -n "$arch" ]
+
+    local this_arch=$(uname -p)
+    local toolchain_prefix=
+    if [ $arch != $this_arch ] ; then
+      local cross_config=$JGB_BUILD_CONFIG_DIR/cross.config
+      . $cross_config
+      local host=${JGB_BUILD_CONFIG_HOST[${this_arch}-${arch}]}
+      [ -n "$host" ]
+      toolchain_prefix=${host}-
+    fi
+
+    debug_info_top_dir="$PWD/.$m"
+    echo remove $debug_info_top_dir
+    rm -rf $debug_info_top_dir
+    mkdir -p $debug_info_top_dir/$jgb_destdir
+
+    jgb_pushd $m/$jgb_destdir
+    for d in usr/bin usr/sbin bin sbin \
+             lib lib64 usr/lib usr/lib64 ;
+    do
+      mkdir -p $debug_info_top_dir/$jgb_destdir/$d/.debug
+      mkdir -p $d/.debug
+      for f in $d/* ;
+      do
+        if [ -f "$f" ] ; then
+          dbg_file=$d/.debug/$(basename $f).dbg
+          if ${toolchain_prefix}objcopy --only-keep-debug $f $dbg_file 2> /dev/null ; then
+            ${toolchain_prefix}strip --strip-unneeded $f || true
+            ${toolchain_prefix}objcopy --add-gnu-debuglink=$dbg_file $f || true
+            mv $dbg_file $debug_info_top_dir/$jgb_destdir/$dbg_file
+          fi
+        fi
+      done
+    done
+    jgb_popd
+
+    local debug_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}_debug.tar.gz
+    local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
+    local debug_file_path=$re_dir/$debug_file
+    mkdir -p $re_dir
+    jgb_pushd $debug_info_top_dir
+    tar -C $debug_info_top_dir -czf $debug_file_path .
+    echo created: $debug_file_path
+    jgb_popd
+}
+
 create_tar()
 {
     local m=$1
@@ -268,6 +321,7 @@ do
   for arch in $jgb_archs;
   do
     install_packages $m $arch
+    strip_packages $m $arch
     for format in $jgb_formats;
     do
       type=$(echo $format | jq -r .type)

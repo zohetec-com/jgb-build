@@ -377,9 +377,13 @@ export CXXFLAGS="$CFLAGS"
 # openssl-3.0.16 install to lib64
 export LDFLAGS="-L${ld_dirs[0]} -L${ld_dirs[1]}"
 
+# 总是启用调试信息, 便于分析问题
+CFLAGS+=" -g"
+CXXFLAGS+=" -g"
+
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
-  CFLAGS+=" -DDEBUG -g -O0"
-  CXXFLAGS+=" -DDEBUG -g -O0"
+  CFLAGS+=" -DDEBUG -O0"
+  CXXFLAGS+=" -DDEBUG -O0"
 fi
 
 if [ "$JGB_BUILD_COVERAGE" == yes ] ; then
