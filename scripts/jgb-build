@@ -364,10 +364,13 @@ fi
 export PKG_CONFIG_PATH="${JGB_BUILD_DESTDIR}/lib/pkgconfig: \
                         ${JGB_BUILD_DESTDIR}/lib64/pkgconfig: \
                         ${JGB_BUILD_DESTDIR}/share/pkgconfig"
+# 创建一些目录：
+# - 如果 inc_dirs, ld_dirs 不存在，编译 xz-5.8.1 时产生大量警告。
+# - 如果 bin_dirs 不存在，phytool-2 安装失败。
 inc_dirs=(${JGB_BUILD_DESTDIR}/include ${JGB_BUILD_DESTDIR}/usr/include)
 ld_dirs=(${JGB_BUILD_DESTDIR}/lib ${JGB_BUILD_DESTDIR}/lib64)
-# 如果目录不存在，编译 xz-5.8.1 时产生大量警告。
-for d in ${inc_dirs[@]} ${ld_dirs[@]} ;
+bin_dirs=(${JGB_BUILD_DESTDIR}/bin ${JGB_BUILD_DESTDIR}/sbin)
+for d in ${inc_dirs[@]} ${ld_dirs[@]} ${bin_dirs[@]} ;
 do
   mkdir -p $d
 done
