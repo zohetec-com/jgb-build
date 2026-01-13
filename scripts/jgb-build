@@ -375,14 +375,14 @@ do
   mkdir -p $d
 done
 
-export CFLAGS="-I${inc_dirs[0]} -I${inc_dirs[1]}"
-export CXXFLAGS="$CFLAGS"
+# 编译 curl 提示：-I 应当在 CPPFLAGS 中提供。
+export CPPFLAGS="-I${inc_dirs[0]} -I${inc_dirs[1]}"
 # openssl-3.0.16 install to lib64
 export LDFLAGS="-L${ld_dirs[0]} -L${ld_dirs[1]}"
 
 # 总是启用调试信息, 便于分析问题
-CFLAGS+=" -g"
-CXXFLAGS+=" -g"
+export CFLAGS+="-g"
+export CXXFLAGS+="-g"
 
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
   CFLAGS+=" -DDEBUG -O0"
