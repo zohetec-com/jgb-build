@@ -62,6 +62,7 @@ install_packages()
 EOF
 
     local re_dir=${JGB_BUILD_DIR}/local/releases/${jgb_release}/$m
+    mkdir -p $re_dir
     detail_info_file=${jgb_release}_V${jgb_version}_${jgb_date_short}_${arch}.json
     detail_info_file_path=$re_dir/$detail_info_file
 
