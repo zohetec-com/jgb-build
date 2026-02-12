@@ -35,10 +35,24 @@ help()
     exit 1
 } >&2
 
-while getopts  "hPR" opt; do
+# display all keys in the map of jgb_src with sort, and stat total number of keys.
+# provided by copilot.
+list()
+{
+  echo "Available packages:"
+  for pk in "${!jgb_src[@]}"; do
+    echo "  $pk"
+  done | sort
+  echo "Total packages: ${#jgb_src[@]}"
+}
+
+while getopts  "hlPR" opt; do
   case ${opt} in
     h)
       help
+      ;;
+    l)
+      O_List=yes
       ;;
     P)
       O_Patch=no
@@ -57,6 +71,11 @@ fi
 
 if [ -f $JGB_BUILD_UPSTREAM_FILE.local ] ; then
   . $JGB_BUILD_UPSTREAM_FILE.local
+fi
+
+if [ "$O_List" == yes ] ; then
+  list
+  exit 0
 fi
 
 # https://stackoverflow.com/questions/9472871/parse-arguments-after-getopts
