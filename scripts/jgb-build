@@ -381,14 +381,19 @@ do
   mkdir -p $d
 done
 
-# 编译 curl 提示：-I,-D 应当在 CPPFLAGS 中提供。
+# 编译 curl 提示：-I,-D 应当在 CPPFLAGS 中提供;但是 cmake 却又不支持 CPPFLAGS。
 export CPPFLAGS="-I${inc_dirs[0]} -I${inc_dirs[1]}"
 # openssl-3.0.16 install to lib64
 export LDFLAGS="-L${ld_dirs[0]} -L${ld_dirs[1]}"
 
 # 总是启用调试信息, 便于分析问题
-export CFLAGS+="-g"
-export CXXFLAGS+="-g"
+export CFLAGS="-g"
+export CXXFLAGS="-g"
+
+if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
+  CFLAGS+=" $CPPFLAGS"
+  CXXFLAGS+=" $CPPFLAGS"
+fi
 
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
   CPPFLAGS+=" -DDEBUG"
