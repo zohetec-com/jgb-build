@@ -142,14 +142,20 @@ process_zip_src()
      || [[ $package_src_file == *".tar.xz" ]] \
      || [[ $package_src_file == *".tgz" ]] \
      || [[ $package_src_file == *".tar.bz2" ]]; then
+    real_package_dir=$(tar tf $package_src_file_cache | head -n 1 | cut -d/ -f1)
     tar xf $package_src_file_cache
   elif [[ $package_src_file == *".zip" ]] ; then
+    real_package_dir=$(unzip -Z -1 $package_src_file_cache | head -n 1 | cut -d/ -f1)
     unzip -q $package_src_file_cache
   elif [[ $package_src_file == *".7z" ]] ; then
     7z x -y $package_src_file_cache
   else
     echo 不支持的文件类型
     exit 1
+  fi
+
+  if [ -n "$real_package_dir" ] && [ $real_package_dir != $package ] ; then
+    mv $real_package_dir $package
   fi
 
   package_config_dir=$JGB_BUILD_CONFIG_DIR/${package}${suffix_variant}
