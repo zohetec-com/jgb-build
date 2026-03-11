@@ -168,7 +168,7 @@ process_zip_src()
     do
       patch -p1 < $pf
     done
-    jgb_popd >/dev/null
+    jgb_popd
   else
     echo "已跳过应用补丁"
   fi
@@ -182,15 +182,31 @@ process_git_src()
 {
   [ ! -d $package ]
   git clone $package_src
-  cd $package
   if [ -n "$variant" ] ; then
+    jgb_pushd $package
     #git fetch --tags
     #TODO：如果存在同名的 branch 和 tag，该如何处理？
     git checkout $variant || {
         echo "variant not found: $variant"
         exit 1
     }
+    jgb_popd
   fi
+}
+
+# libdaemon-0.14 的 config.guess, config.sub 脚本比较旧，无法识别 aarch64 架构，需要更新。
+update_autotools_config()
+{
+   if [ -f config.guess ] \
+    && [ -f config.sub ] \
+    && [ -f /usr/share/misc/config.guess ] \
+    && [ -f /usr/share/misc/config.sub ] ; then
+     if ! grep -q aarch64 config.guess ; then
+       echo 更新 config.guess 和 config.sub
+       cp -v /usr/share/misc/config.guess .
+       cp -v /usr/share/misc/config.sub .
+     fi
+   fi
 }
 
 if [[ $package_src == *".zip" ]] \
@@ -207,6 +223,9 @@ else
   echo "不支持的源包类型: $package_src"
   exit 1
 fi
+
+cd $package
+update_autotools_config
 
 echo 获取源码：$package
 echo 完成
