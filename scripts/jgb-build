@@ -492,7 +492,7 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     make $JGB_BUILD_MAKE_OPTIONS
     if [ "$JGB_BUILD_INSTALL" == yes ] ; then
       pre_install
-      $fakeroot_cmd make $JGB_BUILD_MAKE_INSTALL_TARGET
+      $fakeroot_cmd make $JGB_BUILD_MAKE_INSTALL_TARGET $MAKE_INSTALL_OPTIONS
     fi
   else
     echo "configure not found"
