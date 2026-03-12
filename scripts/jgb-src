@@ -174,7 +174,7 @@ process_zip_src()
   fi
 
   if [ -x $package_config_dir/local-build ] || [ -h $package_config_dir/local-build ]; then
-    ln -vs $package_config_dir/local-build $package
+    ln -vs $package_config_dir/local-build $package/jgb-build.local-build
   fi
 }
 

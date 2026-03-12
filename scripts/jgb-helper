@@ -25,9 +25,9 @@ goto_top_dir()
 {
   while true;
   do
-      if [ -h local-build ] ; then
+      if [ -h jgb-build.local-build ] ; then
         echo "top directory: $PWD"
-        JGB_BUILD_BACK_END="adhoc"
+        JGB_BUILD_BACK_END="local-build"
         break
       elif [ -f CMakeLists.txt ] ; then
         if grep -q "^project" CMakeLists.txt ; then
