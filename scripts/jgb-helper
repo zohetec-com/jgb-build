@@ -72,6 +72,15 @@ jgb_popd()
   popd > /dev/null
 }
 
+include_options()
+{
+    local package=$1
+    local options_file=$JGB_BUILD_CONFIG_DIR/$package/options
+    if [ -f $options_file ] ; then
+      . $options_file
+    fi
+}
+
 if [ -v JGB_BUILD_DEBUG ] ; then
   set -x
 fi

@@ -186,14 +186,6 @@ include_cross_config()
     fi
 }
 
-include_options()
-{
-    options_file=$JGB_BUILD_CONFIG_DIR/$package_name/options
-    if [ -f $options_file ] ; then
-      . $options_file
-    fi
-}
-
 fill_info()
 {
   if is_cross_compile ; then
@@ -328,7 +320,7 @@ export LDFLAGS_OPTIONS
 
 # 载入文件配置
 include_cross_config
-include_options
+include_options $package_name
 
 if [ "$JGB_BUILD_BACK_END" == "local-build" ] ; then
   # 简化处理：构建即安装。

@@ -25,6 +25,7 @@ set -e
 
 O_Patch=yes
 O_Remove=no
+O_DirectInstall=no
 
 help()
 {
@@ -46,8 +47,11 @@ list()
   echo "Total packages: ${#jgb_src[@]}"
 }
 
-while getopts  "hlPR" opt; do
+while getopts  "DhlPR" opt; do
   case ${opt} in
+    D)
+      O_DirectInstall=yes
+      ;;
     h)
       help
       ;;
@@ -105,6 +109,8 @@ if [ -z "$package_src" ] ; then
   exit 1
 fi >&2
 
+include_options $package
+
 process_zip_src()
 {
   package_chksum=${jgb_src_chksum[$package]}
@@ -135,8 +141,14 @@ process_zip_src()
     fi
   fi
 
-  [ ! -d $package ]
-  # 假定：解压缩结果的顶级目录名和包名一致。
+  if [ $O_DirectInstall == yes ] ; then
+    [ -n "$JGB_BUILD_DESTDIR" ]
+    cd $JGB_BUILD_DESTDIR
+  else
+    [ ! -d $package ]
+  fi
+
+if [ "$DIRECT_INSTALL" != yes ] || [ $O_DirectInstall == yes ]; then
   # https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
   if [[ $package_src_file == *".tar.gz" ]] \
      || [[ $package_src_file == *".tar.xz" ]] \
@@ -152,6 +164,18 @@ process_zip_src()
   else
     echo 不支持的文件类型
     exit 1
+  fi
+else
+  # 如果是可直接安装的项目，先不安装。
+  [ "$DIRECT_INSTALL" == yes ]
+  [ $O_DirectInstall == no ]
+  mkdir $package
+  ln -sv $JGB_BUILD_CONFIG_DIR/helper/install.sh $package/jgb-build.local-build
+fi
+
+  if [ $O_DirectInstall == yes ] ; then
+    echo "已安装 $package 到 $PWD"
+    exit 0
   fi
 
   if [ -n "$real_package_dir" ] && [ $real_package_dir != $package ] ; then
@@ -218,6 +242,10 @@ if [[ $package_src == *".zip" ]] \
  ; then
   process_zip_src
 elif [[ $package_src == *".git" ]] ; then
+  if [ $O_DirectInstall == yes ] ; then
+    echo "不支持直接安装 Git 仓库"
+    exit 1
+  fi
   process_git_src
 else
   echo "不支持的源包类型: $package_src"
