@@ -330,7 +330,7 @@ export LDFLAGS_OPTIONS
 include_cross_config
 include_options
 
-if [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
+if [ "$JGB_BUILD_BACK_END" == "local-build" ] ; then
   # 简化处理：构建即安装。
   JGB_BUILD_INSTALL=yes
 fi
@@ -505,9 +505,9 @@ elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
     pre_install
     $fakeroot_cmd make $JGB_BUILD_MAKE_INSTALL_TARGET DESTDIR=$JGB_BUILD_DESTDIR $MAKE_INSTALL_OPTIONS
   fi
-elif [ "$JGB_BUILD_BACK_END" == "adhoc" ] ; then
+elif [ "$JGB_BUILD_BACK_END" == "local-build" ] ; then
   pre_install
-  . local-build
+  ./jgb-build.local-build
 fi
 
 if [ "$JGB_BUILD_INSTALL" == yes  ] ; then

@@ -25,9 +25,9 @@ goto_top_dir()
 {
   while true;
   do
-      if [ -h local-build ] ; then
+      if [ -h jgb-build.local-build ] || [ -x jgb-build.local-build ] ; then
         echo "top directory: $PWD"
-        JGB_BUILD_BACK_END="adhoc"
+        JGB_BUILD_BACK_END="local-build"
         break
       elif [ -f CMakeLists.txt ] ; then
         if grep -q "^project" CMakeLists.txt ; then
@@ -70,6 +70,42 @@ jgb_pushd()
 jgb_popd()
 {
   popd > /dev/null
+}
+
+# https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
+jgb_extract_file()
+{
+    local src_file=$1
+    if [[ $src_file == *".tar.gz" ]] \
+       || [[ $src_file == *".tar.xz" ]] \
+       || [[ $src_file == *".tgz" ]] \
+       || [[ $src_file == *".tar.bz2" ]]; then
+      tar xf $src_file
+    elif [[ $src_file == *".zip" ]] ; then
+      unzip -q $src_file
+    elif [[ $package_src_file == *".7z" ]] ; then
+      7z x -y $src_file
+    else
+      echo 不支持的文件类型
+      exit 1
+    fi
+}
+
+jgb_get_extract_top_dir()
+{
+    local src_file=$1
+    local real_package_dir=
+    if [[ $src_file == *".tar.gz" ]] \
+       || [[ $src_file == *".tar.xz" ]] \
+       || [[ $src_file == *".tgz" ]] \
+       || [[ $src_file == *".tar.bz2" ]]; then
+      real_package_dir=$(tar tf $src_file | head -n 1 | cut -d/ -f1)
+    elif [[ $src_file == *".zip" ]] ; then
+      real_package_dir=$(unzip -Z -1 $src_file | head -n 1 | cut -d/ -f1)
+    else
+      echo 不支持的文件类型
+    fi
+    echo $real_package_dir
 }
 
 if [ -v JGB_BUILD_DEBUG ] ; then

@@ -136,23 +136,24 @@ process_zip_src()
   fi
 
   [ ! -d $package ]
-  # 假定：解压缩结果的顶级目录名和包名一致。
-  # https://stackoverflow.com/questions/229551/how-to-check-if-a-string-contains-a-substring-in-bash
-  if [[ $package_src_file == *".tar.gz" ]] \
-     || [[ $package_src_file == *".tar.xz" ]] \
-     || [[ $package_src_file == *".tgz" ]] \
-     || [[ $package_src_file == *".tar.bz2" ]]; then
-    real_package_dir=$(tar tf $package_src_file_cache | head -n 1 | cut -d/ -f1)
-    tar xf $package_src_file_cache
-  elif [[ $package_src_file == *".zip" ]] ; then
-    real_package_dir=$(unzip -Z -1 $package_src_file_cache | head -n 1 | cut -d/ -f1)
-    unzip -q $package_src_file_cache
-  elif [[ $package_src_file == *".7z" ]] ; then
-    7z x -y $package_src_file_cache
-  else
-    echo 不支持的文件类型
-    exit 1
+
+  if [ "${jgb_src_extract_to_install[$package]}" == yes ] ; then
+    mkdir $package
+    cd $package
+    ln -s $package_src_file_cache
+    cat << EOF > jgb-build.local-build
+#!/bin/bash
+set -e
+. jgb-helper
+cd \$JGB_BUILD_DESTDIR
+jgb_extract_file $package_src_file_cache
+EOF
+    chmod +x jgb-build.local-build
+    exit 0
   fi
+
+  jgb_extract_file $package_src_file_cache
+  real_package_dir=$(jgb_get_extract_top_dir $package_src_file_cache)
 
   if [ -n "$real_package_dir" ] && [ $real_package_dir != $package ] ; then
     mv $real_package_dir $package
@@ -174,7 +175,7 @@ process_zip_src()
   fi
 
   if [ -x $package_config_dir/local-build ] || [ -h $package_config_dir/local-build ]; then
-    ln -vs $package_config_dir/local-build $package
+    ln -vs $package_config_dir/local-build $package/jgb-build.local-build
   fi
 }
 
