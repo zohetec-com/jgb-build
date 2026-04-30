@@ -390,15 +390,15 @@ export LDFLAGS="-L${ld_dirs[0]} -L${ld_dirs[1]}"
 export CFLAGS="-g"
 export CXXFLAGS="-g"
 
-if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
-  CFLAGS+=" $CPPFLAGS"
-  CXXFLAGS+=" $CPPFLAGS"
-fi
-
 if [ "$JGB_BUILD_TYPE" == "Debug" ] ; then
   CPPFLAGS+=" -DDEBUG"
   CFLAGS+=" -O0"
   CXXFLAGS+=" -O0"
+fi
+
+if [ "$JGB_BUILD_BACK_END" == "cmake" ] ; then
+  CFLAGS+=" $CPPFLAGS"
+  CXXFLAGS+=" $CPPFLAGS"
 fi
 
 if [ "$JGB_BUILD_COVERAGE" == yes ] ; then
