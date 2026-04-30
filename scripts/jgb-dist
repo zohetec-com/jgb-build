@@ -26,6 +26,7 @@ set -e
 jgb_date_short=$(date +%Y%m%d)
 jgb_operation="copy"
 jgb_archs=""
+jgb_type="Debug Release"
 
 help()
 {
@@ -65,7 +66,7 @@ get_suffixes()
     done
 }
 
-while getopts  "d:Df:hp:t:v:" opt; do
+while getopts  "d:Df:hp:s:t:v:" opt; do
   case ${opt} in
     d)
       jgb_date_short=$OPTARG
@@ -82,8 +83,11 @@ while getopts  "d:Df:hp:t:v:" opt; do
     p)
       jgb_archs+=" $OPTARG"
       ;;
-    t)
+    s)
       jgb_suffixes+=" $OPTARG"
+      ;;
+    t)
+      jgb_type=$OPTARG
       ;;
     v)
       jgb_version=$OPTARG
@@ -119,7 +123,7 @@ fi
 [ -n "$jgb_release" ] || help
 [ -n "$jgb_version" ] || help
 
-for m in Debug Release;
+for m in $jgb_type;
 do
   for arch in $jgb_archs;
   do

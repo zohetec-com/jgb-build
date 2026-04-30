@@ -26,10 +26,11 @@ set -e
 
 help()
 {
-    echo "[Usage] jgb-release [-f FILE] [ -p ARCH]"
+    echo "[Usage] jgb-release [-f FILE] [ -p ARCH] [-t Release|Debug]"
     echo "-f FILE 指定组装清单文件"
     echo "-h display this help text, then exit"
     echo "-p ARCH 选择目标架构"
+    echo "-t Release|Debug 选择构建配置"
     exit 1
 } >&2
 

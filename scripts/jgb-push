@@ -24,10 +24,11 @@ set -e
 
 . jgb-helper
 jgb_arch=$(uname -p)
+jgb_type="Debug Release"
 
 help()
 {
-    echo "[Usage] jgb-push [-cdh] [-p ARCH] package"
+    echo "[Usage] jgb-push [-cdhr] [-p ARCH] [-t Release|Debug] package"
     echo "-c 清除指定的 ARCH 或者 package"
     echo "-d DATE 指定包的日期，默认今天"
     echo "-h display this help text, then exit"
@@ -45,7 +46,7 @@ push()
     if [ -n "$variant" ] ; then
       suffix_variant="_${variant}"
     fi
-    for m in Debug Release;
+    for m in $jgb_type;
     do
         src_dir=${JGB_BUILD_DIR}/local/packages/$m/${jgb_arch}/${pk}
         dst_dir=${JGB_BUILD_DIR}/dist/packages/$m/${jgb_arch}/${pk}
@@ -75,7 +76,7 @@ push()
     done
 }
 
-while getopts  "cd:hp:r" opt; do
+while getopts  "cd:hp:rt:" opt; do
   case ${opt} in
     c)
       clean=yes
@@ -88,6 +89,9 @@ while getopts  "cd:hp:r" opt; do
       ;;
     p)
       jgb_arch=$OPTARG
+      ;;
+    t)
+      jgb_type=$OPTARG
       ;;
     r)
       revert=yes
