@@ -54,11 +54,8 @@ preset()
     # yes 对于 autoconf 项目，当执行交叉编译时， 应当为 configure 设置 --host 选项。
     export JGB_BUILD_CONFIGURE_OPTIONS_HOST=yes
 
-    # for make
-    export JGB_BUILD_MAKE_OPTIONS=
-
     # for make install
-    export JGB_BUILD_MAKE_INSTALL_TARGET=install
+    JGB_BUILD_MAKE_INSTALL_TARGET=install
     export JGB_BUILD_INSTALL_FAKEROOT=
     export JGB_BUILD_HOST=
 }
@@ -489,7 +486,7 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
   fi
   if [ -x configure ] ; then
     ./configure --prefix=$JGB_BUILD_DESTDIR $JGB_BUILD_CONFIGURE_OPTIONS $CONFIGURE_OPTIONS
-    make $JGB_BUILD_MAKE_OPTIONS
+    make $MAKE_OPTIONS
     if [ "$JGB_BUILD_INSTALL" == yes ] ; then
       pre_install
       $fakeroot_cmd make $JGB_BUILD_MAKE_INSTALL_TARGET $MAKE_INSTALL_OPTIONS
@@ -499,7 +496,16 @@ elif [ "$JGB_BUILD_BACK_END" == "autoconf" ] ; then
     exit 1
   fi
 elif [ "$JGB_BUILD_BACK_END" == "makefile" ] ; then
-  # TODO: 交叉编译时指定 CC 等变量
+  JGB_BUILD_MAKE_OPTIONS=
+  # 会有什么情况不能定义这些吗？
+  if is_cross_compile ; then
+     JGB_BUILD_MAKE_OPTIONS=" CROSS_COMPILE=${JGB_BUILD_HOST}-"
+     JGB_BUILD_MAKE_OPTIONS+=" CC=${JGB_BUILD_HOST}-gcc"
+     JGB_BUILD_MAKE_OPTIONS+=" CXX=${JGB_BUILD_HOST}-g++"
+     JGB_BUILD_MAKE_OPTIONS+=" AR=${JGB_BUILD_HOST}-ar"
+     JGB_BUILD_MAKE_OPTIONS+=" RANLIB=${JGB_BUILD_HOST}-ranlib"
+     JGB_BUILD_MAKE_OPTIONS+=" LD=${JGB_BUILD_HOST}-ld"
+  fi
   make $JGB_BUILD_MAKE_OPTIONS $MAKE_OPTIONS
   if [ "$JGB_BUILD_INSTALL" == yes ] ; then
     pre_install
