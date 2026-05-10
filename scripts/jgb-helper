@@ -83,7 +83,7 @@ jgb_extract_file()
       tar xf $src_file
     elif [[ $src_file == *".zip" ]] ; then
       unzip -q $src_file
-    elif [[ $package_src_file == *".7z" ]] ; then
+    elif [[ $src_file == *".7z" ]] ; then
       7z x -y $src_file
     else
       echo 不支持的文件类型

@@ -88,10 +88,10 @@ clean()
     jgb_pushd $JGB_BUILD_DESTDIR
     if [ -f $f ] ; then
        while read line; do
-          if [ -d $line ] ; then
-            rm -dv $line || true
+          if [ -d "$line" ] ; then
+            rm -dv "$line" || true
           else
-            rm -v $line || true
+            rm -v "$line" || true
           fi 2> /dev/null
        done < $f
     fi
@@ -367,9 +367,7 @@ fi
 # lib/pkgconfig -- 一般情况
 # lib64/pkgconfig -- openssl-3.0.16
 # share/pkgconfig -- zlib
-export PKG_CONFIG_PATH="${JGB_BUILD_DESTDIR}/lib/pkgconfig: \
-                        ${JGB_BUILD_DESTDIR}/lib64/pkgconfig: \
-                        ${JGB_BUILD_DESTDIR}/share/pkgconfig"
+export PKG_CONFIG_PATH="${JGB_BUILD_DESTDIR}/lib/pkgconfig:${JGB_BUILD_DESTDIR}/lib64/pkgconfig:${JGB_BUILD_DESTDIR}/share/pkgconfig"
 # 创建一些目录：
 # - 如果 inc_dirs, ld_dirs 不存在，编译 xz-5.8.1 时产生大量警告。
 # - 如果 bin_dirs 不存在，phytool-2 安装失败。
